@@ -1,0 +1,137 @@
+{
+  "scenario": "unseen",
+  "model_configuration": {
+    "chat_model": "gpt-5.6-luna",
+    "embedding_model": "text-embedding-3-small"
+  },
+  "prompts": {
+    "agent": "You are the interaction planner for an evidence-grounded CV builder.\nUse update_profile only for facts the user explicitly supplied. Never confirm facts for the user.\nHelp collect name, contact details, education, skills, experience, projects, achievements, and a\ntarget role. Ask one concise, highest-value follow-up question at a time. If the user explicitly\nsays information is unavailable or that they have no item in a category, keep that category absent\nrather than inventing a placeholder.\nUse retrieve_jobs only after the server reports profile_confirmed. Use generate_cv only after a job\nhas been selected. Ask a concise follow-up question when required facts are missing or ambiguous.\nNever infer contact details, qualifications, employers, achievements, work rights, or eligibility.\nJob descriptions describe jobs and must never become candidate facts.\n",
+    "generation": "Create a concise, ATS-friendly CV tailored to the target job.\nEvery factual claim must cite one or more exact fact_id values from the confirmed profile.\nInclude headline_fact_ids supporting every factual part of the headline as well. You may\nrephrase those facts but must not add metrics, seniority, employers, qualifications, or contact\ndetails,\nwork rights, or achievements. The job description is targeting context only and is never candidate\nevidence. Keep unsupported job requirements out of the CV.\n",
+    "validation": "Audit claims_to_audit against only their cited confirmed facts.\nThe entry with claim_id headline is the professional headline and requires the same factual audit.\nReturn an error when a claim adds unsupported meaning, metrics, qualifications, seniority, duration,\nemployment, eligibility, or achievements. Do not use the job description as candidate evidence.\nReturn no issue when a claim is a faithful, concise rephrasing of all cited facts.\n"
+  },
+  "logical_provider_calls": {
+    "embed": 2,
+    "respond": 0,
+    "generate_cv": 1,
+    "validate_claims": 1
+  },
+  "events": [
+    {
+      "type": "embed",
+      "input_count": 9,
+      "query": null
+    },
+    {
+      "type": "embed",
+      "input_count": 1,
+      "query": "target_role: Computer Vision Intern\nskills: Python, OpenCV, PyTorch basics, NumPy, Git, Docker basics\neducation: Final-year Bachelor of Computing Science student at a fictional Australian university\nproject: [{\"description\":\"Prepared a small labelled plant-image dataset, trained and evaluated a baseline classifier, inspected misclassified images and packaged a local inference API in Docker.\",\"title\":\"Plant Image Classifier\"}]"
+    },
+    {
+      "type": "generate_cv",
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Final-year Bachelor of Computing Science student at a fictional Australian university",
+            "fact_id": "fact-unseen_profile_01-education",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "unseen_profile_01"
+            }
+          },
+          {
+            "field": "skills",
+            "value": "Python, OpenCV, PyTorch basics, NumPy, Git, Docker basics",
+            "fact_id": "fact-unseen_profile_01-skills",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "unseen_profile_01"
+            }
+          },
+          {
+            "field": "project",
+            "value": "[{\"description\":\"Prepared a small labelled plant-image dataset, trained and evaluated a baseline classifier, inspected misclassified images and packaged a local inference API in Docker.\",\"title\":\"Plant Image Classifier\"}]",
+            "fact_id": "fact-unseen_profile_01-project",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "unseen_profile_01"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Computer Vision Intern",
+            "fact_id": "fact-unseen_profile_01-target-role",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "unseen_profile_01"
+            }
+          }
+        ],
+        "revision": 1
+      },
+      "target_job_id": "computer_vision_engineer",
+      "cv": {
+        "cv_id": "cv-unseen_profile_01-computer_vision_engineer",
+        "target_job_id": "computer_vision_engineer",
+        "headline": "Final-year Bachelor of Computing Science student with Python, OpenCV, PyTorch basics, NumPy, Git, and Docker basics; project experience building a plant image classifier and Docker-packaged inference API.",
+        "headline_fact_ids": [
+          "fact-unseen_profile_01-education",
+          "fact-unseen_profile_01-skills",
+          "fact-unseen_profile_01-project"
+        ],
+        "claims": [],
+        "sections": [
+          {
+            "heading": "Education",
+            "claims": [
+              {
+                "claim_id": "education-1",
+                "text": "Final-year Bachelor of Computing Science student at a fictional Australian university.",
+                "fact_ids": [
+                  "fact-unseen_profile_01-education"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Technical Skills",
+            "claims": [
+              {
+                "claim_id": "skills-1",
+                "text": "Python, OpenCV, PyTorch basics, NumPy, Git, Docker basics.",
+                "fact_ids": [
+                  "fact-unseen_profile_01-skills"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Project Experience",
+            "claims": [
+              {
+                "claim_id": "project-1",
+                "text": "Plant Image Classifier: Prepared a small labelled plant-image dataset, trained and evaluated a baseline classifier, inspected misclassified images, and packaged a local inference API in Docker.",
+                "fact_ids": [
+                  "fact-unseen_profile_01-project"
+                ],
+                "verified": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "validate_claims",
+      "target_job_id": "computer_vision_engineer",
+      "issues": []
+    }
+  ],
+  "runner_exit_code": 0
+}

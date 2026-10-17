@@ -1,0 +1,33 @@
+{
+  "scenario": "complete-agent",
+  "runs": [
+    {
+      "run_id": "complete-agent-unseen-profile-01",
+      "profile_id": "unseen_profile_01",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "{\"achievements\":[\"Presented the classifier and its limitations in a final-year project demonstration\"],\"contact_details\":{\"email\":\"aisha.brown@example.com\",\"github\":\"https://github.com/example/aisha-brown\"},\"declaration\":\"This is fictional assessment test data and does not describe a real person.\",\"document_id\":\"unseen_profile_01\",\"education\":\"Final-year Bachelor of Computing Science student at a fictional Australian university\",\"experience\":[],\"name\":\"Aisha Brown\",\"profile_type\":\"synthetic_unseen\",\"projects\":[{\"description\":\"Prepared a small labelled plant-image dataset, trained and evaluated a baseline classifier, inspected misclassified images and packaged a local inference API in Docker.\",\"title\":\"Plant Image Classifier\"}],\"skills\":[\"Python\",\"OpenCV\",\"PyTorch basics\",\"NumPy\",\"Git\",\"Docker basics\"],\"target_role\":\"Computer Vision Intern\"}"
+        },
+        {
+          "role": "assistant",
+          "content": "Your profile has been saved with:\n\n- **Name:** Aisha Brown\n- **Email:** aisha.brown@example.com\n- **GitHub:** https://github.com/example/aisha-brown\n- **Education:** Final-year Bachelor of Computing Science student\n- **Skills:** Python, OpenCV, PyTorch basics, NumPy, Git, Docker basics\n- **Project:** Plant Image Classifier\n- **Achievement:** Presented the classifier and its limitations in a final-year project demonstration\n- **Target role:** Computer Vision Intern\n- **Experience:** None provided\n\nPlease confirm that this profile is correct so I can search for suitable roles."
+        }
+      ],
+      "retrieval_results": [],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_review"
+        }
+      ],
+      "cv_results": [],
+      "failure": null,
+      "note": null
+    }
+  ]
+}

@@ -1,0 +1,304 @@
+{
+  "scenario": "incomplete-agent",
+  "model_configuration": {
+    "chat_model": "gpt-5.6-luna",
+    "embedding_model": "text-embedding-3-small"
+  },
+  "prompts": {
+    "agent": "You are the interaction planner for an evidence-grounded CV builder.\nUse update_profile only for facts the user explicitly supplied. Never confirm facts for the user.\nHelp collect name, contact details, education, skills, experience, projects, achievements, and a\ntarget role. Ask one concise, highest-value follow-up question at a time. If the user explicitly\nsays information is unavailable or that they have no item in a category, keep that category absent\nrather than inventing a placeholder.\nUse retrieve_jobs only after the server reports profile_confirmed. Use generate_cv only after a job\nhas been selected. Ask a concise follow-up question when required facts are missing or ambiguous.\nNever infer contact details, qualifications, employers, achievements, work rights, or eligibility.\nJob descriptions describe jobs and must never become candidate facts.\n",
+    "generation": "Create a concise, ATS-friendly CV tailored to the target job.\nEvery factual claim must cite one or more exact fact_id values from the confirmed profile.\nInclude headline_fact_ids supporting every factual part of the headline as well. You may\nrephrase those facts but must not add metrics, seniority, employers, qualifications, or contact\ndetails,\nwork rights, or achievements. The job description is targeting context only and is never candidate\nevidence. Keep unsupported job requirements out of the CV.\n",
+    "validation": "Audit claims_to_audit against only their cited confirmed facts.\nThe entry with claim_id headline is the professional headline and requires the same factual audit.\nReturn an error when a claim adds unsupported meaning, metrics, qualifications, seniority, duration,\nemployment, eligibility, or achievements. Do not use the job description as candidate evidence.\nReturn no issue when a claim is a faithful, concise rephrasing of all cited facts.\n"
+  },
+  "logical_provider_calls": {
+    "embed": 0,
+    "respond": 5,
+    "generate_cv": 0,
+    "validate_claims": 0
+  },
+  "events": [
+    {
+      "type": "respond",
+      "message": "",
+      "actions": [
+        {
+          "name": "update_profile",
+          "arguments": {
+            "facts": [
+              {
+                "field": "education",
+                "value": "Studies Computing Science at UTS"
+              },
+              {
+                "field": "projects",
+                "value": "Has completed networking and software projects"
+              },
+              {
+                "field": "experience",
+                "value": "Works in IT support"
+              },
+              {
+                "field": "interests",
+                "value": "Interested in security"
+              },
+              {
+                "field": "target_role",
+                "value": "Not yet decided which technical role fits"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "respond",
+      "message": "What name and contact details would you like included on your CV?",
+      "actions": []
+    },
+    {
+      "type": "agent_turn",
+      "message": "What name and contact details would you like included on your CV?",
+      "observations": [
+        {
+          "action": "update_profile",
+          "success": true,
+          "result": {
+            "updated_fields": [
+              "education",
+              "projects",
+              "experience",
+              "interests",
+              "target_role"
+            ],
+            "state": "profile_review"
+          },
+          "error": null
+        }
+      ],
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Studies Computing Science at UTS",
+            "fact_id": "fact-994f4c8d-c8a8-4034-b950-d00ecba458eb",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "projects",
+            "value": "Has completed networking and software projects",
+            "fact_id": "fact-7160088f-45ee-4921-9fd8-24de8756abc8",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "Works in IT support",
+            "fact_id": "fact-d46bf16b-85b9-4144-8a69-66010734ca8f",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "interests",
+            "value": "Interested in security",
+            "fact_id": "fact-209854bc-39d9-45d8-80c6-4ee8af2932fc",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Not yet decided which technical role fits",
+            "fact_id": "fact-50e2e296-dd1d-4834-8a05-1353d4806e92",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          }
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "type": "respond",
+      "message": "What name should appear on your CV?",
+      "actions": []
+    },
+    {
+      "type": "agent_turn",
+      "message": "What name should appear on your CV?",
+      "observations": [],
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Studies Computing Science at UTS",
+            "fact_id": "fact-994f4c8d-c8a8-4034-b950-d00ecba458eb",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "projects",
+            "value": "Has completed networking and software projects",
+            "fact_id": "fact-7160088f-45ee-4921-9fd8-24de8756abc8",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "Works in IT support",
+            "fact_id": "fact-d46bf16b-85b9-4144-8a69-66010734ca8f",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "interests",
+            "value": "Interested in security",
+            "fact_id": "fact-209854bc-39d9-45d8-80c6-4ee8af2932fc",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Not yet decided which technical role fits",
+            "fact_id": "fact-50e2e296-dd1d-4834-8a05-1353d4806e92",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          }
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "type": "respond",
+      "message": "",
+      "actions": [
+        {
+          "name": "update_profile",
+          "arguments": {
+            "facts": [
+              {
+                "field": "project",
+                "value": "Network Monitoring Exercise \u2014 Network Fundamentals coursework: captured and inspected local network traffic in a controlled lab, documented common protocol fields, and explained simple monitoring checks. Technologies: Linux, Wireshark basics, networking, technical reporting."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "respond",
+      "message": "What name should appear on your CV?",
+      "actions": []
+    },
+    {
+      "type": "agent_turn",
+      "message": "What name should appear on your CV?",
+      "observations": [
+        {
+          "action": "update_profile",
+          "success": true,
+          "result": {
+            "updated_fields": [
+              "project"
+            ],
+            "state": "profile_review"
+          },
+          "error": null
+        }
+      ],
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Studies Computing Science at UTS",
+            "fact_id": "fact-994f4c8d-c8a8-4034-b950-d00ecba458eb",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "projects",
+            "value": "Has completed networking and software projects",
+            "fact_id": "fact-7160088f-45ee-4921-9fd8-24de8756abc8",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "Works in IT support",
+            "fact_id": "fact-d46bf16b-85b9-4144-8a69-66010734ca8f",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "interests",
+            "value": "Interested in security",
+            "fact_id": "fact-209854bc-39d9-45d8-80c6-4ee8af2932fc",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Not yet decided which technical role fits",
+            "fact_id": "fact-50e2e296-dd1d-4834-8a05-1353d4806e92",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-aae7097e-380d-45ee-bfc3-d08da9bd4566"
+            }
+          },
+          {
+            "field": "project",
+            "value": "Network Monitoring Exercise \u2014 Network Fundamentals coursework: captured and inspected local network traffic in a controlled lab, documented common protocol fields, and explained simple monitoring checks. Technologies: Linux, Wireshark basics, networking, technical reporting.",
+            "fact_id": "fact-c11a8508-e20d-42e2-bd5f-f2e1ebc216af",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-20fefac9-4114-4621-9361-fe0012db7bfa"
+            }
+          }
+        ],
+        "revision": 2
+      }
+    }
+  ],
+  "runner_exit_code": 0
+}

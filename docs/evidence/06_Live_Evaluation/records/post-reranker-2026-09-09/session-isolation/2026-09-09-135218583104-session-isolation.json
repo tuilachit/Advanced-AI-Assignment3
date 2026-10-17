@@ -1,0 +1,127 @@
+{
+  "scenario": "session-isolation",
+  "runs": [
+    {
+      "run_id": "session-isolation-student_profile_01",
+      "profile_id": "student_profile_01",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.316531,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.313821,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        },
+        {
+          "document_id": "rag_agent_engineer",
+          "score": 0.309444,
+          "excerpt": "Requirements: A master's degree or above in computer science, artificial intelligence, data systems, or a related field; three or more years of research or engineering experience; experience with LLMs, RAG, AI agents, or intelligent data systems; and strong Python programming."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        },
+        {
+          "from_state": "cv_draft",
+          "to_state": "cv_validated"
+        },
+        {
+          "from_state": "cv_validated",
+          "to_state": "pdf_exported"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [],
+          "export_outcome": "exported"
+        }
+      ],
+      "failure": null,
+      "note": "Isolation verified: each session retained only its imported profile source."
+    },
+    {
+      "run_id": "session-isolation-student_profile_02",
+      "profile_id": "student_profile_02",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.398497,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.3476,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        },
+        {
+          "document_id": "agentic_ai_engineer",
+          "score": 0.340475,
+          "excerpt": "Requirements: A degree in computer science, software engineering, or a related field; two or more years of Python development; experience developing and deploying LLM orchestration, RAG, or AI-agent solutions; modern AI tooling and orchestration frameworks; cloud infrastructure; Terraform or Kubernetes; Docker; and the ability to translate business needs into maintainable technical solutions."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        },
+        {
+          "from_state": "cv_draft",
+          "to_state": "cv_validated"
+        },
+        {
+          "from_state": "cv_validated",
+          "to_state": "pdf_exported"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [],
+          "export_outcome": "exported"
+        }
+      ],
+      "failure": null,
+      "note": "Isolation verified: each session retained only its imported profile source."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "artifacts": [
+    "2026-09-09-134319386411-supplied-five.json"
+  ],
+  "model_configuration": {
+    "chat_model": "gpt-5.6-luna",
+    "embedding_model": "text-embedding-3-small"
+  },
+  "scenario": "supplied-five",
+  "status": "planned"
+}

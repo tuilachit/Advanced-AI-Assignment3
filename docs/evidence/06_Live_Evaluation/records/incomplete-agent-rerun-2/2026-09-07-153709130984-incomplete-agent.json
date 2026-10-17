@@ -1,0 +1,49 @@
+{
+  "scenario": "incomplete-agent",
+  "runs": [
+    {
+      "run_id": "incomplete-agent-student-profile-04",
+      "profile_id": "student_profile_04",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "I study Computing Science at UTS. I have done some networking and software projects and I work in IT support. I am interested in security, but I have not yet decided which technical role fits me."
+        },
+        {
+          "role": "assistant",
+          "content": "Which technical security direction interests you most: **SOC/security analyst, network security, penetration testing, cloud security, security engineering**, or another role?"
+        },
+        {
+          "role": "user",
+          "content": "My target role is Cybersecurity Intern."
+        },
+        {
+          "role": "assistant",
+          "content": "What name and contact details would you like included on your CV (email, phone, LinkedIn, or portfolio)?"
+        },
+        {
+          "role": "user",
+          "content": "My supplied name is Noah Ibrahim. No contact details are supplied in this synthetic profile."
+        },
+        {
+          "role": "assistant",
+          "content": "What were your main responsibilities in your IT support role, and what was the employer or organisation?"
+        }
+      ],
+      "retrieval_results": [],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_review"
+        }
+      ],
+      "cv_results": [],
+      "failure": null,
+      "note": null
+    }
+  ]
+}

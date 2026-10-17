@@ -1,0 +1,26 @@
+.DS_Store
+.env
+.env.local
+.env.*
+!.env.example
+.superpowers/
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+frontend/dist/
+frontend/.sample-pdf-build/
+frontend/playwright-report/
+frontend/test-results/
+artifacts/generated/
+submission/
+tmp/
+*.pyc
+*.egg-info/
+# CocoIndex Code (ccc)
+/.cocoindex_code/
+.worktrees/

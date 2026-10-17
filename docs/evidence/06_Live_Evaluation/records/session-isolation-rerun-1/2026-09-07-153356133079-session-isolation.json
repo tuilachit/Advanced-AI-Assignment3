@@ -1,0 +1,128 @@
+{
+  "scenario": "session-isolation",
+  "runs": [
+    {
+      "run_id": "session-isolation-student_profile_01",
+      "profile_id": "student_profile_01",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.517233,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "agentic_ai_engineer",
+          "score": 0.49666,
+          "excerpt": "Requirements: A degree in computer science, software engineering, or a related field; two or more years of Python development; experience developing and deploying LLM orchestration, RAG, or AI-agent solutions; modern AI tooling and orchestration frameworks; cloud infrastructure; Terraform or Kubernetes; Docker; and the ability to translate business needs into maintainable technical solutions."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.471733,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [
+            {
+              "code": "unsupported_qualification",
+              "message": "The phrase \"developer\" adds an unsupported professional qualification or identity; the cited facts establish project experience and skills, not that the candidate is a developer."
+            },
+            {
+              "code": "overstated_achievement",
+              "message": "\"Built a web API\" implies the candidate independently built the API, while the cited fact says it was built as a group project and that the candidate contributed to specific components."
+            }
+          ],
+          "export_outcome": "blocked"
+        }
+      ],
+      "failure": null,
+      "note": "Isolation verified: each session retained only its imported profile source."
+    },
+    {
+      "run_id": "session-isolation-student_profile_02",
+      "profile_id": "student_profile_02",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.609779,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "nlp_multimodal_ml_engineer",
+          "score": 0.588854,
+          "excerpt": "Requirements: At least four years of industry AI or machine-learning experience, preferably in NLP or multimodal AI; a master's degree or higher; big-data technologies such as Spark, Hadoop, Kafka, or vector databases; Python or Java; ML and deep-learning libraries; transformer architectures; hyperparameter optimisation; production deployment; Git; CI/CD; and experience managing multiple environments."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.588192,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        },
+        {
+          "from_state": "cv_draft",
+          "to_state": "cv_validated"
+        },
+        {
+          "from_state": "cv_validated",
+          "to_state": "pdf_exported"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [],
+          "export_outcome": "exported"
+        }
+      ],
+      "failure": null,
+      "note": "Isolation verified: each session retained only its imported profile source."
+    }
+  ]
+}

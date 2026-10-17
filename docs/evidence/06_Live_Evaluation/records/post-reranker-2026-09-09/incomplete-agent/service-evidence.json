@@ -1,0 +1,229 @@
+{
+  "scenario": "incomplete-agent",
+  "selected_profiles": [],
+  "model_configuration": {
+    "chat_model": "gpt-5.6-luna",
+    "embedding_model": "text-embedding-3-small"
+  },
+  "prompts": {
+    "agent": "You are the interaction planner for an evidence-grounded CV builder.\nUse update_profile only for facts the user explicitly supplied. Never confirm facts for the user.\nHelp collect name, contact details, education, skills, experience, projects, achievements, and a\ntarget role. Ask one concise, highest-value follow-up question at a time. If the user explicitly\nsays information is unavailable or that they have no item in a category, keep that category absent\nrather than inventing a placeholder.\nClarify an ambiguous target role before asking for name or contact details. Use the conversation\nhistory to avoid repeating questions the user has already answered.\nUse retrieve_jobs only after the server reports profile_confirmed. Use generate_cv only after a job\nhas been selected. Ask a concise follow-up question when required facts are missing or ambiguous.\nNever infer contact details, qualifications, employers, achievements, work rights, or eligibility.\nJob descriptions describe jobs and must never become candidate facts.\n",
+    "generation": "Create a concise, ATS-friendly CV tailored to the target job.\nEvery factual claim must cite one or more exact fact_id values from the confirmed profile.\nInclude headline_fact_ids supporting every factual part of the headline as well. You may\nrephrase those facts but must not add metrics, seniority, employers, qualifications, or contact\ndetails,\nwork rights, or achievements. The job description is targeting context only and is never candidate\nevidence. Keep unsupported job requirements out of the CV.\nA listed skill establishes a skill, not experience; describe skills as skills unless a cited\nproject or experience fact explicitly supports practice.\nDo not call the candidate a graduate unless completed graduation is explicit.\nCite project or experience facts for backend work in the headline; a list of API skills alone\ndoes not establish backend work. Check that the headline cites every fact needed for its wording.\nFor group projects, describe the candidate's stated contributions and retain the team context;\ndo not imply sole ownership.\nDo not turn skills or a target role into a current professional identity\nsuch as developer or engineer.\nUse a factual education-and-skills headline when that identity is absent.\n",
+    "validation": "Audit claims_to_audit against only their cited confirmed facts.\nThe entry with claim_id headline is the professional headline and requires the same factual audit.\nReturn an error when a claim adds unsupported meaning, metrics, qualifications, seniority, duration,\nemployment, eligibility, or achievements. Do not use the job description as candidate evidence.\nReturn no issue when a claim is a faithful, concise rephrasing of all cited facts.\n"
+  },
+  "logical_provider_calls": {
+    "embed": 0,
+    "respond": 5,
+    "generate_cv": 0,
+    "validate_claims": 0
+  },
+  "events": [
+    {
+      "type": "respond",
+      "message": "Which target direction interests you most: **cybersecurity analyst**, **network security**, **SOC analyst**, **security engineer**, or another technical role?",
+      "actions": []
+    },
+    {
+      "type": "agent_turn",
+      "message": "Which target direction interests you most: **cybersecurity analyst**, **network security**, **SOC analyst**, **security engineer**, or another technical role?",
+      "observations": [],
+      "profile": {
+        "facts": [],
+        "revision": 0
+      }
+    },
+    {
+      "type": "respond",
+      "message": "",
+      "actions": [
+        {
+          "name": "update_profile",
+          "arguments": {
+            "facts": [
+              {
+                "field": "education",
+                "value": "Studying Computing Science at UTS"
+              },
+              {
+                "field": "projects",
+                "value": "Networking and software projects"
+              },
+              {
+                "field": "experience",
+                "value": "Works in IT support"
+              },
+              {
+                "field": "target_role",
+                "value": "Cybersecurity Intern"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "respond",
+      "message": "What is your full name?",
+      "actions": []
+    },
+    {
+      "type": "agent_turn",
+      "message": "What is your full name?",
+      "observations": [
+        {
+          "action": "update_profile",
+          "success": true,
+          "result": {
+            "updated_fields": [
+              "education",
+              "projects",
+              "experience",
+              "target_role"
+            ],
+            "state": "profile_review"
+          },
+          "error": null
+        }
+      ],
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Studying Computing Science at UTS",
+            "fact_id": "fact-ce03c72b-bf1c-49bb-9f16-08e71c4b5ffd",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          },
+          {
+            "field": "projects",
+            "value": "Networking and software projects",
+            "fact_id": "fact-8eb7f1eb-529a-40b6-8670-46a2ad76e79b",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "Works in IT support",
+            "fact_id": "fact-91568ddf-54ee-4508-b172-f979cc91531a",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Cybersecurity Intern",
+            "fact_id": "fact-1ff05d82-4c01-4a77-843c-c4469b6f150d",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          }
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "type": "respond",
+      "message": "",
+      "actions": [
+        {
+          "name": "update_profile",
+          "arguments": {
+            "facts": [
+              {
+                "field": "name",
+                "value": "Noah Ibrahim"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "respond",
+      "message": "What email address and phone number should appear on your CV?",
+      "actions": []
+    },
+    {
+      "type": "agent_turn",
+      "message": "What email address and phone number should appear on your CV?",
+      "observations": [
+        {
+          "action": "update_profile",
+          "success": true,
+          "result": {
+            "updated_fields": [
+              "name"
+            ],
+            "state": "profile_review"
+          },
+          "error": null
+        }
+      ],
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Studying Computing Science at UTS",
+            "fact_id": "fact-ce03c72b-bf1c-49bb-9f16-08e71c4b5ffd",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          },
+          {
+            "field": "projects",
+            "value": "Networking and software projects",
+            "fact_id": "fact-8eb7f1eb-529a-40b6-8670-46a2ad76e79b",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "Works in IT support",
+            "fact_id": "fact-91568ddf-54ee-4508-b172-f979cc91531a",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Cybersecurity Intern",
+            "fact_id": "fact-1ff05d82-4c01-4a77-843c-c4469b6f150d",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-5da7421f-3c86-4f28-a6cf-be3c1b2ae58b"
+            }
+          },
+          {
+            "field": "name",
+            "value": "Noah Ibrahim",
+            "fact_id": "fact-84b18410-6023-495b-a3fb-7ca5fe72fe1a",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-ce81f178-6c3f-45c1-8fff-b23460423014"
+            }
+          }
+        ],
+        "revision": 2
+      }
+    }
+  ],
+  "runner_exit_code": 0
+}

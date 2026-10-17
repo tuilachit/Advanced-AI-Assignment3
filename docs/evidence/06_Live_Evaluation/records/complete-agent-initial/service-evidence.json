@@ -1,0 +1,180 @@
+{
+  "scenario": "complete-agent",
+  "model_configuration": {
+    "chat_model": "gpt-5.6-luna",
+    "embedding_model": "text-embedding-3-small"
+  },
+  "prompts": {
+    "agent": "You are the interaction planner for an evidence-grounded CV builder.\nUse update_profile only for facts the user explicitly supplied. Never confirm facts for the user.\nHelp collect name, contact details, education, skills, experience, projects, achievements, and a\ntarget role. Ask one concise, highest-value follow-up question at a time. If the user explicitly\nsays information is unavailable or that they have no item in a category, keep that category absent\nrather than inventing a placeholder.\nUse retrieve_jobs only after the server reports profile_confirmed. Use generate_cv only after a job\nhas been selected. Ask a concise follow-up question when required facts are missing or ambiguous.\nNever infer contact details, qualifications, employers, achievements, work rights, or eligibility.\nJob descriptions describe jobs and must never become candidate facts.\n",
+    "generation": "Create a concise, ATS-friendly CV tailored to the target job.\nEvery factual claim must cite one or more exact fact_id values from the confirmed profile.\nInclude headline_fact_ids supporting every factual part of the headline as well. You may\nrephrase those facts but must not add metrics, seniority, employers, qualifications, or contact\ndetails,\nwork rights, or achievements. The job description is targeting context only and is never candidate\nevidence. Keep unsupported job requirements out of the CV.\n",
+    "validation": "Audit claims_to_audit against only their cited confirmed facts.\nThe entry with claim_id headline is the professional headline and requires the same factual audit.\nReturn an error when a claim adds unsupported meaning, metrics, qualifications, seniority, duration,\nemployment, eligibility, or achievements. Do not use the job description as candidate evidence.\nReturn no issue when a claim is a faithful, concise rephrasing of all cited facts.\n"
+  },
+  "logical_provider_calls": {
+    "embed": 0,
+    "respond": 2,
+    "generate_cv": 0,
+    "validate_claims": 0
+  },
+  "events": [
+    {
+      "type": "respond",
+      "message": "",
+      "actions": [
+        {
+          "name": "update_profile",
+          "arguments": {
+            "facts": [
+              {
+                "field": "name",
+                "value": "Aisha Brown"
+              },
+              {
+                "field": "email",
+                "value": "aisha.brown@example.com"
+              },
+              {
+                "field": "github",
+                "value": "https://github.com/example/aisha-brown"
+              },
+              {
+                "field": "education",
+                "value": "Final-year Bachelor of Computing Science student at a fictional Australian university"
+              },
+              {
+                "field": "skills",
+                "value": "Python; OpenCV; PyTorch basics; NumPy; Git; Docker basics"
+              },
+              {
+                "field": "projects",
+                "value": "Plant Image Classifier: Prepared a small labelled plant-image dataset, trained and evaluated a baseline classifier, inspected misclassified images, and packaged a local inference API in Docker."
+              },
+              {
+                "field": "achievements",
+                "value": "Presented the classifier and its limitations in a final-year project demonstration"
+              },
+              {
+                "field": "target_role",
+                "value": "Computer Vision Intern"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "respond",
+      "message": "Your profile has been saved with:\n\n- **Name:** Aisha Brown\n- **Email:** aisha.brown@example.com\n- **GitHub:** https://github.com/example/aisha-brown\n- **Education:** Final-year Bachelor of Computing Science student\n- **Skills:** Python, OpenCV, PyTorch basics, NumPy, Git, Docker basics\n- **Project:** Plant Image Classifier\n- **Achievement:** Presented the classifier and its limitations in a final-year project demonstration\n- **Target role:** Computer Vision Intern\n- **Experience:** None provided\n\nPlease confirm that this profile is correct so I can search for suitable roles.",
+      "actions": []
+    },
+    {
+      "type": "agent_turn",
+      "message": "Your profile has been saved with:\n\n- **Name:** Aisha Brown\n- **Email:** aisha.brown@example.com\n- **GitHub:** https://github.com/example/aisha-brown\n- **Education:** Final-year Bachelor of Computing Science student\n- **Skills:** Python, OpenCV, PyTorch basics, NumPy, Git, Docker basics\n- **Project:** Plant Image Classifier\n- **Achievement:** Presented the classifier and its limitations in a final-year project demonstration\n- **Target role:** Computer Vision Intern\n- **Experience:** None provided\n\nPlease confirm that this profile is correct so I can search for suitable roles.",
+      "observations": [
+        {
+          "action": "update_profile",
+          "success": true,
+          "result": {
+            "updated_fields": [
+              "name",
+              "email",
+              "github",
+              "education",
+              "skills",
+              "projects",
+              "achievements",
+              "target_role"
+            ],
+            "state": "profile_review"
+          },
+          "error": null
+        }
+      ],
+      "profile": {
+        "facts": [
+          {
+            "field": "name",
+            "value": "Aisha Brown",
+            "fact_id": "fact-e5e167e4-6375-4dbc-914e-de09ffb6148b",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          },
+          {
+            "field": "email",
+            "value": "aisha.brown@example.com",
+            "fact_id": "fact-67aa3aa8-83d2-4039-ad64-63f88695576d",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          },
+          {
+            "field": "github",
+            "value": "https://github.com/example/aisha-brown",
+            "fact_id": "fact-023f1641-c5b1-45af-9e59-b2c69791a253",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          },
+          {
+            "field": "education",
+            "value": "Final-year Bachelor of Computing Science student at a fictional Australian university",
+            "fact_id": "fact-c7473b9a-6862-4d02-8820-98a4bcc46e7a",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          },
+          {
+            "field": "skills",
+            "value": "Python; OpenCV; PyTorch basics; NumPy; Git; Docker basics",
+            "fact_id": "fact-33c9273d-8701-4c93-b998-674e47599dec",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          },
+          {
+            "field": "projects",
+            "value": "Plant Image Classifier: Prepared a small labelled plant-image dataset, trained and evaluated a baseline classifier, inspected misclassified images, and packaged a local inference API in Docker.",
+            "fact_id": "fact-7804870a-e1c8-49e1-800b-08c085281767",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          },
+          {
+            "field": "achievements",
+            "value": "Presented the classifier and its limitations in a final-year project demonstration",
+            "fact_id": "fact-af2072dc-6ae4-48a2-9c52-2582878de4b9",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Computer Vision Intern",
+            "fact_id": "fact-5544ee42-ba30-4501-9261-8dba93aece38",
+            "status": "draft",
+            "source": {
+              "source_type": "user_message",
+              "reference": "message-32d20a30-21a4-42e1-a041-1a4638801b80"
+            }
+          }
+        ],
+        "revision": 1
+      }
+    }
+  ],
+  "runner_exit_code": 0
+}

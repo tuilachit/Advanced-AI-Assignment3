@@ -1,0 +1,305 @@
+{
+  "scenario": "supplied-five",
+  "runs": [
+    {
+      "run_id": "supplied-five-student_profile_01",
+      "profile_id": "student_profile_01",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.517108,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "agentic_ai_engineer",
+          "score": 0.496623,
+          "excerpt": "Requirements: A degree in computer science, software engineering, or a related field; two or more years of Python development; experience developing and deploying LLM orchestration, RAG, or AI-agent solutions; modern AI tooling and orchestration frameworks; cloud infrastructure; Terraform or Kubernetes; Docker; and the ability to translate business needs into maintainable technical solutions."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.47175,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [
+            {
+              "code": "unsupported_experience",
+              "message": "The cited facts confirm the listed skills but do not establish experience with Python, REST APIs, SQL, Git, pytest, or Jupyter Notebook. Remove “experience” or cite evidence explicitly confirming it."
+            },
+            {
+              "code": "unsupported_experience",
+              "message": "The cited facts confirm the listed skills but do not establish experience with them. Replace “with experience in” with a faithful skills description, such as “with skills in,” unless experience is separately confirmed."
+            }
+          ],
+          "export_outcome": "blocked"
+        }
+      ],
+      "failure": null,
+      "note": null
+    },
+    {
+      "run_id": "supplied-five-student_profile_02",
+      "profile_id": "student_profile_02",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.609683,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "nlp_multimodal_ml_engineer",
+          "score": 0.588856,
+          "excerpt": "Requirements: At least four years of industry AI or machine-learning experience, preferably in NLP or multimodal AI; a master's degree or higher; big-data technologies such as Spark, Hadoop, Kafka, or vector databases; Python or Java; ML and deep-learning libraries; transformer architectures; hyperparameter optimisation; production deployment; Git; CI/CD; and experience managing multiple environments."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.588207,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        },
+        {
+          "from_state": "cv_draft",
+          "to_state": "cv_validated"
+        },
+        {
+          "from_state": "cv_validated",
+          "to_state": "pdf_exported"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [],
+          "export_outcome": "exported"
+        }
+      ],
+      "failure": null,
+      "note": null
+    },
+    {
+      "run_id": "supplied-five-student_profile_03",
+      "profile_id": "student_profile_03",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.539475,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.479612,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        },
+        {
+          "document_id": "nlp_multimodal_ml_engineer",
+          "score": 0.463338,
+          "excerpt": "Requirements: At least four years of industry AI or machine-learning experience, preferably in NLP or multimodal AI; a master's degree or higher; big-data technologies such as Spark, Hadoop, Kafka, or vector databases; Python or Java; ML and deep-learning libraries; transformer architectures; hyperparameter optimisation; production deployment; Git; CI/CD; and experience managing multiple environments."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [
+            {
+              "code": "unsupported_qualification",
+              "message": "The claim describes the candidate as a \"graduate,\" but the cited education fact only confirms a Bachelor of Computing Science and does not confirm completed graduation status."
+            }
+          ],
+          "export_outcome": "blocked"
+        }
+      ],
+      "failure": null,
+      "note": null
+    },
+    {
+      "run_id": "supplied-five-student_profile_04",
+      "profile_id": "student_profile_04",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.446472,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "computer_vision_engineer",
+          "score": 0.440387,
+          "excerpt": "Responsibilities: Design computer-vision solutions; build and optimise models for video analytics; train, validate, and improve models using video datasets; develop Python applications, APIs, and supporting services; deploy workloads on edge devices and cloud platforms; support proof-of-concept initiatives, pilot deployments, and production rollouts; and collaborate with stakeholders and technology partners."
+        },
+        {
+          "document_id": "agentic_ai_engineer",
+          "score": 0.419607,
+          "excerpt": "Requirements: A degree in computer science, software engineering, or a related field; two or more years of Python development; experience developing and deploying LLM orchestration, RAG, or AI-agent solutions; modern AI tooling and orchestration frameworks; cloud infrastructure; Terraform or Kubernetes; Docker; and the ability to translate business needs into maintainable technical solutions."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        },
+        {
+          "from_state": "cv_draft",
+          "to_state": "cv_validated"
+        },
+        {
+          "from_state": "cv_validated",
+          "to_state": "pdf_exported"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [],
+          "export_outcome": "exported"
+        }
+      ],
+      "failure": null,
+      "note": null
+    },
+    {
+      "run_id": "supplied-five-student_profile_05",
+      "profile_id": "student_profile_05",
+      "model_configuration": {
+        "chat_model": "gpt-5.6-luna",
+        "embedding_model": "text-embedding-3-small"
+      },
+      "messages": [],
+      "retrieval_results": [
+        {
+          "document_id": "graduate_ai_engineer",
+          "score": 0.581328,
+          "excerpt": "Requirements: A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline; up to two years of professional experience; knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning; Python with NumPy, Pandas, scikit-learn, and PyTorch; data visualisation; experience with structured or unstructured data; and software-development practice."
+        },
+        {
+          "document_id": "agentic_ai_engineer",
+          "score": 0.516203,
+          "excerpt": "Requirements: A degree in computer science, software engineering, or a related field; two or more years of Python development; experience developing and deploying LLM orchestration, RAG, or AI-agent solutions; modern AI tooling and orchestration frameworks; cloud infrastructure; Terraform or Kubernetes; Docker; and the ability to translate business needs into maintainable technical solutions."
+        },
+        {
+          "document_id": "agentic_ai_data_scientist",
+          "score": 0.503815,
+          "excerpt": "Requirements: Strong Python development; modern LLM frameworks and SDKs; prompt engineering; agentic patterns; tool or function calling; structured outputs; RAG evaluation; vector databases; SQL; scientific evaluation; Git; communication; and experience with cloud, Docker, data pipelines, and related production systems."
+        }
+      ],
+      "transitions": [
+        {
+          "from_state": "collecting_profile",
+          "to_state": "profile_confirmed"
+        },
+        {
+          "from_state": "profile_confirmed",
+          "to_state": "jobs_retrieved"
+        },
+        {
+          "from_state": "jobs_retrieved",
+          "to_state": "job_selected"
+        },
+        {
+          "from_state": "job_selected",
+          "to_state": "cv_draft"
+        }
+      ],
+      "cv_results": [
+        {
+          "selected_job_id": "graduate_ai_engineer",
+          "validation_issues": [
+            {
+              "code": "unsupported_meaning",
+              "message": "The headline adds “Backend,” which is not supported by the cited education and skills facts. REST APIs are confirmed, but backend work is only supported by separately cited experience and project facts."
+            }
+          ],
+          "export_outcome": "blocked"
+        }
+      ],
+      "failure": null,
+      "note": null
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "document_id": "unseen_profile_01",
+  "profile_type": "synthetic_unseen",
+  "name": "Aisha Brown",
+  "contact_details": {
+    "email": "aisha.brown@example.com",
+    "github": "https://github.com/example/aisha-brown"
+  },
+  "education": "Final-year Bachelor of Computing Science student at a fictional Australian university",
+  "skills": ["Python", "OpenCV", "PyTorch basics", "NumPy", "Git", "Docker basics"],
+  "experience": [],
+  "projects": [
+    {
+      "title": "Plant Image Classifier",
+      "description": "Prepared a small labelled plant-image dataset, trained and evaluated a baseline classifier, inspected misclassified images and packaged a local inference API in Docker."
+    }
+  ],
+  "achievements": ["Presented the classifier and its limitations in a final-year project demonstration"],
+  "target_role": "Computer Vision Intern",
+  "declaration": "This is fictional assessment test data and does not describe a real person."
+}

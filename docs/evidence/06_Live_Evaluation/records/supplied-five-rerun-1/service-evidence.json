@@ -1,0 +1,494 @@
+{
+  "scenario": "supplied-five",
+  "selected_profiles": [
+    "student_profile_01",
+    "student_profile_03",
+    "student_profile_05"
+  ],
+  "model_configuration": {
+    "chat_model": "gpt-5.6-luna",
+    "embedding_model": "text-embedding-3-small"
+  },
+  "prompts": {
+    "agent": "You are the interaction planner for an evidence-grounded CV builder.\nUse update_profile only for facts the user explicitly supplied. Never confirm facts for the user.\nHelp collect name, contact details, education, skills, experience, projects, achievements, and a\ntarget role. Ask one concise, highest-value follow-up question at a time. If the user explicitly\nsays information is unavailable or that they have no item in a category, keep that category absent\nrather than inventing a placeholder.\nClarify an ambiguous target role before asking for name or contact details. Use the conversation\nhistory to avoid repeating questions the user has already answered.\nUse retrieve_jobs only after the server reports profile_confirmed. Use generate_cv only after a job\nhas been selected. Ask a concise follow-up question when required facts are missing or ambiguous.\nNever infer contact details, qualifications, employers, achievements, work rights, or eligibility.\nJob descriptions describe jobs and must never become candidate facts.\n",
+    "generation": "Create a concise, ATS-friendly CV tailored to the target job.\nEvery factual claim must cite one or more exact fact_id values from the confirmed profile.\nInclude headline_fact_ids supporting every factual part of the headline as well. You may\nrephrase those facts but must not add metrics, seniority, employers, qualifications, or contact\ndetails,\nwork rights, or achievements. The job description is targeting context only and is never candidate\nevidence. Keep unsupported job requirements out of the CV.\nA listed skill establishes a skill, not experience; describe skills as skills unless a cited\nproject or experience fact explicitly supports practice.\nDo not call the candidate a graduate unless completed graduation is explicit.\nCite project or experience facts for backend work in the headline; a list of API skills alone\ndoes not establish backend work. Check that the headline cites every fact needed for its wording.\n",
+    "validation": "Audit claims_to_audit against only their cited confirmed facts.\nThe entry with claim_id headline is the professional headline and requires the same factual audit.\nReturn an error when a claim adds unsupported meaning, metrics, qualifications, seniority, duration,\nemployment, eligibility, or achievements. Do not use the job description as candidate evidence.\nReturn no issue when a claim is a faithful, concise rephrasing of all cited facts.\n"
+  },
+  "logical_provider_calls": {
+    "embed": 4,
+    "respond": 0,
+    "generate_cv": 3,
+    "validate_claims": 3
+  },
+  "events": [
+    {
+      "type": "embed",
+      "input_count": 9,
+      "query": null
+    },
+    {
+      "type": "embed",
+      "input_count": 1,
+      "query": "target_role: Software Engineering Intern\nskills: Python, Java, SQL, REST APIs, Git, GitHub, pytest, Jupyter Notebook\neducation: Bachelor of Computing Science\nexperience: [{\"description\":\"Handled customer questions, worked with a small team during busy periods and followed written procedures.\",\"organisation\":\"Fictional retail store\",\"role\":\"Customer Service Assistant\",\"type\":\"Casual employment\"}]\nproject: [{\"context\":\"University group project\",\"description\":\"Built a small web API that stores course information and helps students check timetable clashes. Contributed to the Python service layer, SQL queries, REST endpoint design, input validation and unit tests.\",\"technologies\":[\"Python\",\"Flask\",\"SQLite\",\"REST APIs\",\"pytest\",\"Git\"],\"title\":\"Team Course Planner\"},{\"context\":\"43007 Advanced Artificial Intelligence coursework\",\"description\":\"Created a small tool-call agent prototype that selects local course tools and records each tool result before producing a response.\",\"technologies\":[\"Python\",\"prompt design\",\"tool calling\",\"JSON\",\"Jupyter Notebook\"],\"title\":\"AI Coursework Prototype\"}]"
+    },
+    {
+      "type": "generate_cv",
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Bachelor of Computing Science",
+            "fact_id": "fact-student_profile_01-education",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_01"
+            }
+          },
+          {
+            "field": "skills",
+            "value": "Python, Java, SQL, REST APIs, Git, GitHub, pytest, Jupyter Notebook",
+            "fact_id": "fact-student_profile_01-skills",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_01"
+            }
+          },
+          {
+            "field": "project",
+            "value": "[{\"context\":\"University group project\",\"description\":\"Built a small web API that stores course information and helps students check timetable clashes. Contributed to the Python service layer, SQL queries, REST endpoint design, input validation and unit tests.\",\"technologies\":[\"Python\",\"Flask\",\"SQLite\",\"REST APIs\",\"pytest\",\"Git\"],\"title\":\"Team Course Planner\"},{\"context\":\"43007 Advanced Artificial Intelligence coursework\",\"description\":\"Created a small tool-call agent prototype that selects local course tools and records each tool result before producing a response.\",\"technologies\":[\"Python\",\"prompt design\",\"tool calling\",\"JSON\",\"Jupyter Notebook\"],\"title\":\"AI Coursework Prototype\"}]",
+            "fact_id": "fact-student_profile_01-project",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_01"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "[{\"description\":\"Handled customer questions, worked with a small team during busy periods and followed written procedures.\",\"organisation\":\"Fictional retail store\",\"role\":\"Customer Service Assistant\",\"type\":\"Casual employment\"}]",
+            "fact_id": "fact-student_profile_01-experience",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_01"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Software Engineering Intern",
+            "fact_id": "fact-student_profile_01-target-role",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_01"
+            }
+          }
+        ],
+        "revision": 1
+      },
+      "target_job_id": "graduate_ai_engineer",
+      "cv": {
+        "cv_id": "cv-student_profile_01-graduate_ai_engineer",
+        "target_job_id": "graduate_ai_engineer",
+        "headline": "Bachelor of Computing Science with Python web API development and AI agent prototyping experience",
+        "headline_fact_ids": [
+          "fact-student_profile_01-education",
+          "fact-student_profile_01-project"
+        ],
+        "claims": [],
+        "sections": [
+          {
+            "heading": "Profile",
+            "claims": [
+              {
+                "claim_id": "profile-01",
+                "text": "Bachelor of Computing Science with project experience building a Python web API and an AI tool-call agent prototype.",
+                "fact_ids": [
+                  "fact-student_profile_01-education",
+                  "fact-student_profile_01-project"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Technical Skills",
+            "claims": [
+              {
+                "claim_id": "skills-01",
+                "text": "Python, Java, SQL, REST APIs, Git, GitHub, pytest, and Jupyter Notebook.",
+                "fact_ids": [
+                  "fact-student_profile_01-skills"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Projects",
+            "claims": [
+              {
+                "claim_id": "project-01",
+                "text": "Team Course Planner \u2014 Contributed to a Python service layer, SQL queries, REST endpoint design, input validation, and unit tests for a web API that stores course information and helps students check timetable clashes.",
+                "fact_ids": [
+                  "fact-student_profile_01-project"
+                ],
+                "verified": true
+              },
+              {
+                "claim_id": "project-02",
+                "text": "AI Coursework Prototype \u2014 Created a tool-call agent prototype that selects local course tools and records each tool result before producing a response.",
+                "fact_ids": [
+                  "fact-student_profile_01-project"
+                ],
+                "verified": true
+              },
+              {
+                "claim_id": "project-03",
+                "text": "Project technologies included Python, Flask, SQLite, REST APIs, pytest, Git, prompt design, tool calling, JSON, and Jupyter Notebook.",
+                "fact_ids": [
+                  "fact-student_profile_01-project"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Experience",
+            "claims": [
+              {
+                "claim_id": "experience-01",
+                "text": "Customer Service Assistant, Fictional retail store \u2014 Handled customer questions, worked with a small team during busy periods, and followed written procedures.",
+                "fact_ids": [
+                  "fact-student_profile_01-experience"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Education",
+            "claims": [
+              {
+                "claim_id": "education-01",
+                "text": "Bachelor of Computing Science",
+                "fact_ids": [
+                  "fact-student_profile_01-education"
+                ],
+                "verified": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "validate_claims",
+      "target_job_id": "graduate_ai_engineer",
+      "issues": []
+    },
+    {
+      "type": "embed",
+      "input_count": 1,
+      "query": "target_role: Data Analyst Intern\nskills: Python, SQL, pandas, Excel, Power BI basics, Matplotlib, data cleaning, Git, data storytelling\neducation: Bachelor of Computing Science\nexperience: [{\"description\":\"Helped first-year students organise programming exercises and explain basic debugging steps.\",\"organisation\":\"Fictional university study program\",\"role\":\"Peer Learning Volunteer\",\"type\":\"Volunteer experience\"}]\nproject: [{\"context\":\"University analytics project\",\"description\":\"Cleaned survey data, designed summary measures and built an interactive dashboard to compare student-service usage across study groups. Used Excel and Power BI basics, then explained the limitations of missing responses in the final presentation.\",\"technologies\":[\"Python\",\"pandas\",\"SQL\",\"Excel\",\"Power BI basics\",\"data cleaning\",\"data storytelling\"],\"title\":\"Student Services Dashboard\"},{\"context\":\"43007 Advanced Artificial Intelligence coursework\",\"description\":\"Compared retrieved job descriptions for several student goals, used simple plots to inspect the results and summarised which terms caused the search results to change.\",\"technologies\":[\"Python\",\"Matplotlib\",\"text embeddings\",\"similarity search\",\"evaluation\"],\"title\":\"Search Result Analysis\"}]"
+    },
+    {
+      "type": "generate_cv",
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Bachelor of Computing Science",
+            "fact_id": "fact-student_profile_03-education",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_03"
+            }
+          },
+          {
+            "field": "skills",
+            "value": "Python, SQL, pandas, Excel, Power BI basics, Matplotlib, data cleaning, Git, data storytelling",
+            "fact_id": "fact-student_profile_03-skills",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_03"
+            }
+          },
+          {
+            "field": "project",
+            "value": "[{\"context\":\"University analytics project\",\"description\":\"Cleaned survey data, designed summary measures and built an interactive dashboard to compare student-service usage across study groups. Used Excel and Power BI basics, then explained the limitations of missing responses in the final presentation.\",\"technologies\":[\"Python\",\"pandas\",\"SQL\",\"Excel\",\"Power BI basics\",\"data cleaning\",\"data storytelling\"],\"title\":\"Student Services Dashboard\"},{\"context\":\"43007 Advanced Artificial Intelligence coursework\",\"description\":\"Compared retrieved job descriptions for several student goals, used simple plots to inspect the results and summarised which terms caused the search results to change.\",\"technologies\":[\"Python\",\"Matplotlib\",\"text embeddings\",\"similarity search\",\"evaluation\"],\"title\":\"Search Result Analysis\"}]",
+            "fact_id": "fact-student_profile_03-project",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_03"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "[{\"description\":\"Helped first-year students organise programming exercises and explain basic debugging steps.\",\"organisation\":\"Fictional university study program\",\"role\":\"Peer Learning Volunteer\",\"type\":\"Volunteer experience\"}]",
+            "fact_id": "fact-student_profile_03-experience",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_03"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Data Analyst Intern",
+            "fact_id": "fact-student_profile_03-target-role",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_03"
+            }
+          }
+        ],
+        "revision": 1
+      },
+      "target_job_id": "graduate_ai_engineer",
+      "cv": {
+        "cv_id": "cv-student_profile_03-graduate_ai_engineer",
+        "target_job_id": "graduate_ai_engineer",
+        "headline": "Bachelor of Computing Science | Python and data analysis skills | Analytics dashboard project experience",
+        "headline_fact_ids": [
+          "fact-student_profile_03-education",
+          "fact-student_profile_03-skills",
+          "fact-student_profile_03-project"
+        ],
+        "claims": [],
+        "sections": [
+          {
+            "heading": "Education",
+            "claims": [
+              {
+                "claim_id": "education-1",
+                "text": "Bachelor of Computing Science",
+                "fact_ids": [
+                  "fact-student_profile_03-education"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Technical Skills",
+            "claims": [
+              {
+                "claim_id": "skills-1",
+                "text": "Python, SQL, pandas, Excel, Power BI basics, Matplotlib, data cleaning, Git, and data storytelling",
+                "fact_ids": [
+                  "fact-student_profile_03-skills"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Projects",
+            "claims": [
+              {
+                "claim_id": "project-1",
+                "text": "Student Services Dashboard \u2014 Cleaned survey data, designed summary measures, and built an interactive dashboard comparing student-service usage across study groups using Excel and Power BI basics. Explained limitations caused by missing responses in the final presentation.",
+                "fact_ids": [
+                  "fact-student_profile_03-project"
+                ],
+                "verified": true
+              },
+              {
+                "claim_id": "project-2",
+                "text": "Search Result Analysis \u2014 Compared retrieved job descriptions for several student goals, used simple plots to inspect results, and summarised which terms changed search results.",
+                "fact_ids": [
+                  "fact-student_profile_03-project"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Experience",
+            "claims": [
+              {
+                "claim_id": "experience-1",
+                "text": "Peer Learning Volunteer, Fictional university study program \u2014 Helped first-year students organise programming exercises and explained basic debugging steps.",
+                "fact_ids": [
+                  "fact-student_profile_03-experience"
+                ],
+                "verified": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "validate_claims",
+      "target_job_id": "graduate_ai_engineer",
+      "issues": []
+    },
+    {
+      "type": "embed",
+      "input_count": 1,
+      "query": "target_role: Graduate Software Engineer\nskills: Java, Python, SQL, REST APIs, Git, Docker basics, CI basics, unit testing, Jira-style task tracking\neducation: Bachelor of Computing Science \u2013 Industry Degree Academy (IDeA)\nexperience: [{\"description\":\"Fixed small backend issues, added automated tests, updated API documentation, used a basic CI test pipeline and joined sprint planning with a software team. The role represents early workplace experience, not senior engineering responsibility.\",\"organisation\":\"Fictional technology company\",\"role\":\"Software Development Cadet\",\"type\":\"UTS IDeA cadetship; synthetic employer\"}]\nproject: [{\"context\":\"University studio project\",\"description\":\"Worked in a small team on a service platform. Implemented Java backend endpoints, wrote unit tests and helped prepare a short demonstration for non-technical stakeholders.\",\"technologies\":[\"Java\",\"REST APIs\",\"PostgreSQL\",\"JUnit\",\"Git\"],\"title\":\"Team Service Platform\"},{\"context\":\"43007 Advanced Artificial Intelligence coursework\",\"description\":\"Connected a language model to local course tools and logged the model's actions and tool observations in a bounded loop.\",\"technologies\":[\"Python\",\"structured tool calls\",\"prompt design\",\"JSON\"],\"title\":\"Tool-Call Agent Prototype\"}]"
+    },
+    {
+      "type": "generate_cv",
+      "profile": {
+        "facts": [
+          {
+            "field": "education",
+            "value": "Bachelor of Computing Science \u2013 Industry Degree Academy (IDeA)",
+            "fact_id": "fact-student_profile_05-education",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_05"
+            }
+          },
+          {
+            "field": "skills",
+            "value": "Java, Python, SQL, REST APIs, Git, Docker basics, CI basics, unit testing, Jira-style task tracking",
+            "fact_id": "fact-student_profile_05-skills",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_05"
+            }
+          },
+          {
+            "field": "project",
+            "value": "[{\"context\":\"University studio project\",\"description\":\"Worked in a small team on a service platform. Implemented Java backend endpoints, wrote unit tests and helped prepare a short demonstration for non-technical stakeholders.\",\"technologies\":[\"Java\",\"REST APIs\",\"PostgreSQL\",\"JUnit\",\"Git\"],\"title\":\"Team Service Platform\"},{\"context\":\"43007 Advanced Artificial Intelligence coursework\",\"description\":\"Connected a language model to local course tools and logged the model's actions and tool observations in a bounded loop.\",\"technologies\":[\"Python\",\"structured tool calls\",\"prompt design\",\"JSON\"],\"title\":\"Tool-Call Agent Prototype\"}]",
+            "fact_id": "fact-student_profile_05-project",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_05"
+            }
+          },
+          {
+            "field": "experience",
+            "value": "[{\"description\":\"Fixed small backend issues, added automated tests, updated API documentation, used a basic CI test pipeline and joined sprint planning with a software team. The role represents early workplace experience, not senior engineering responsibility.\",\"organisation\":\"Fictional technology company\",\"role\":\"Software Development Cadet\",\"type\":\"UTS IDeA cadetship; synthetic employer\"}]",
+            "fact_id": "fact-student_profile_05-experience",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_05"
+            }
+          },
+          {
+            "field": "target_role",
+            "value": "Graduate Software Engineer",
+            "fact_id": "fact-student_profile_05-target-role",
+            "status": "confirmed",
+            "source": {
+              "source_type": "imported_test_profile",
+              "reference": "student_profile_05"
+            }
+          }
+        ],
+        "revision": 1
+      },
+      "target_job_id": "graduate_ai_engineer",
+      "cv": {
+        "cv_id": "cv-student_profile_05-graduate-ai-engineer",
+        "target_job_id": "graduate_ai_engineer",
+        "headline": "Bachelor of Computing Science candidate with Python AI-agent coursework and Java backend development experience",
+        "headline_fact_ids": [
+          "fact-student_profile_05-education",
+          "fact-student_profile_05-project",
+          "fact-student_profile_05-experience"
+        ],
+        "claims": [],
+        "sections": [
+          {
+            "heading": "Education",
+            "claims": [
+              {
+                "claim_id": "education-1",
+                "text": "Bachelor of Computing Science \u2014 Industry Degree Academy (IDeA)",
+                "fact_ids": [
+                  "fact-student_profile_05-education"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Relevant Experience",
+            "claims": [
+              {
+                "claim_id": "experience-1",
+                "text": "Software Development Cadet \u2014 Fictional technology company",
+                "fact_ids": [
+                  "fact-student_profile_05-experience"
+                ],
+                "verified": true
+              },
+              {
+                "claim_id": "experience-2",
+                "text": "Fixed small backend issues, added automated tests, updated API documentation, used a basic CI test pipeline, and joined sprint planning with a software team.",
+                "fact_ids": [
+                  "fact-student_profile_05-experience"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Projects",
+            "claims": [
+              {
+                "claim_id": "project-1",
+                "text": "Tool-Call Agent Prototype \u2014 Connected a language model to local course tools and logged model actions and tool observations in a bounded loop using Python, structured tool calls, prompt design, and JSON.",
+                "fact_ids": [
+                  "fact-student_profile_05-project"
+                ],
+                "verified": true
+              },
+              {
+                "claim_id": "project-2",
+                "text": "Team Service Platform \u2014 Worked in a small team to implement Java backend endpoints, write unit tests, and help prepare a demonstration for non-technical stakeholders using REST APIs, PostgreSQL, JUnit, and Git.",
+                "fact_ids": [
+                  "fact-student_profile_05-project"
+                ],
+                "verified": true
+              }
+            ]
+          },
+          {
+            "heading": "Technical Skills",
+            "claims": [
+              {
+                "claim_id": "skills-1",
+                "text": "Programming: Python, Java, SQL",
+                "fact_ids": [
+                  "fact-student_profile_05-skills"
+                ],
+                "verified": true
+              },
+              {
+                "claim_id": "skills-2",
+                "text": "AI and development: REST APIs, Git, Docker basics, CI basics, unit testing, Jira-style task tracking",
+                "fact_ids": [
+                  "fact-student_profile_05-skills"
+                ],
+                "verified": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "validate_claims",
+      "target_job_id": "graduate_ai_engineer",
+      "issues": []
+    }
+  ],
+  "runner_exit_code": 0
+}

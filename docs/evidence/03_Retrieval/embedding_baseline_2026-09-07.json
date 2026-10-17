@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "job_data_sha256": "0f9403de41f2de0605bbbf6ef3faa3a81f265b7ec36938aea6c058ada723b461",
+  "source_artifacts": {
+    "supplied_five": "docs/evidence/06_Live_Evaluation/records/supplied-five-initial/2026-09-07-152935354411-supplied-five.json",
+    "unseen": "docs/evidence/06_Live_Evaluation/records/unseen-initial/2026-09-07-153114169436-unseen.json"
+  },
+  "profiles": [
+    {"profile_id":"student_profile_01","expected_document_id":"graduate_ai_engineer","expectation_kind":"development_expectation","embedding_only_top_three":[{"document_id":"graduate_ai_engineer","observed_semantic_score":0.517108},{"document_id":"agentic_ai_engineer","observed_semantic_score":0.496623},{"document_id":"agentic_ai_data_scientist","observed_semantic_score":0.47175}]},
+    {"profile_id":"student_profile_02","expected_document_id":"rag_agent_engineer","expectation_kind":"development_expectation","embedding_only_top_three":[{"document_id":"graduate_ai_engineer","observed_semantic_score":0.609683},{"document_id":"nlp_multimodal_ml_engineer","observed_semantic_score":0.588856},{"document_id":"agentic_ai_data_scientist","observed_semantic_score":0.588207}]},
+    {"profile_id":"student_profile_03","expected_document_id":"recommendation_systems_ml_engineer","expectation_kind":"development_expectation","embedding_only_top_three":[{"document_id":"graduate_ai_engineer","observed_semantic_score":0.539475},{"document_id":"agentic_ai_data_scientist","observed_semantic_score":0.479612},{"document_id":"nlp_multimodal_ml_engineer","observed_semantic_score":0.463338}]},
+    {"profile_id":"student_profile_04","expected_document_id":"trust_safety_ml_engineer","expectation_kind":"development_expectation","embedding_only_top_three":[{"document_id":"graduate_ai_engineer","observed_semantic_score":0.446472},{"document_id":"computer_vision_engineer","observed_semantic_score":0.440387},{"document_id":"agentic_ai_engineer","observed_semantic_score":0.419607}]},
+    {"profile_id":"student_profile_05","expected_document_id":"agentic_ai_engineer","expectation_kind":"development_expectation","embedding_only_top_three":[{"document_id":"graduate_ai_engineer","observed_semantic_score":0.581328},{"document_id":"agentic_ai_engineer","observed_semantic_score":0.516203},{"document_id":"agentic_ai_data_scientist","observed_semantic_score":0.503815}]},
+    {"profile_id":"unseen_profile_01","expected_document_id":"computer_vision_engineer","expectation_kind":"development_expectation","evidence_scope":"regression_case_not_held_out","embedding_only_top_three":[{"document_id":"computer_vision_engineer","observed_semantic_score":0.589143},{"document_id":"graduate_ai_engineer","observed_semantic_score":0.492901},{"document_id":"nlp_multimodal_ml_engineer","observed_semantic_score":0.42658}]}
+  ]
+}

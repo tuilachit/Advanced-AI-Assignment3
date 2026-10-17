@@ -1,0 +1,11 @@
+{
+  "artifacts": [
+    "2026-09-07-153356133079-session-isolation.json"
+  ],
+  "model_configuration": {
+    "chat_model": "gpt-5.6-luna",
+    "embedding_model": "text-embedding-3-small"
+  },
+  "scenario": "session-isolation",
+  "status": "planned"
+}
