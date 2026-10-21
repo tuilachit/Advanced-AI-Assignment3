@@ -123,6 +123,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Interview */
+        post: operations["create_interview_api_sessions__session_id__interviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/interviews/{interview_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Interview */
+        get: operations["get_interview_api_sessions__session_id__interviews__interview_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/interviews/{interview_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Interview */
+        post: operations["cancel_interview_api_sessions__session_id__interviews__interview_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/interviews/{interview_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End Interview */
+        post: operations["end_interview_api_sessions__session_id__interviews__interview_id__end_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/interviews/{interview_id}/next-step": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Next Step */
+        post: operations["next_step_api_sessions__session_id__interviews__interview_id__next_step_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/interviews/{interview_id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Skip Question */
+        post: operations["skip_question_api_sessions__session_id__interviews__interview_id__skip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/interviews/{interview_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Interview */
+        post: operations["start_interview_api_sessions__session_id__interviews__interview_id__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/interviews/{interview_id}/turns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Turn */
+        post: operations["record_turn_api_sessions__session_id__interviews__interview_id__turns_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{session_id}/jobs/{document_id}/select": {
         parameters: {
             query?: never;
@@ -309,6 +445,28 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** AskQuestionStep */
+        AskQuestionStep: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            action: "ask_question";
+            /** Flow Revision */
+            flow_revision: number;
+            question: components["schemas"]["InterviewQuestion"];
+        };
+        /** CreateInterviewRequest */
+        CreateInterviewRequest: {
+            config?: components["schemas"]["InterviewConfig-Input"];
+            consent: components["schemas"]["InterviewConsent"];
+            /** Cv Id */
+            cv_id?: string | null;
+            /** Job */
+            job: components["schemas"]["SuppliedJobRequest"] | components["schemas"]["PastedJobRequest"];
+            /** Request Id */
+            request_id: string;
+        };
         /** CVClaim */
         "CVClaim-Input": {
             /** Claim Id */
@@ -421,6 +579,208 @@ export interface components {
          * @enum {string}
          */
         FactStatus: "draft" | "confirmed";
+        /** FinishStep */
+        FinishStep: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            action: "finish";
+            /** Flow Revision */
+            flow_revision: number;
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "time_limit" | "questions_complete";
+        };
+        /** FollowUpProposal */
+        FollowUpProposal: {
+            /** Rationale */
+            rationale: string;
+            /** Text */
+            text: string;
+        };
+        /** Interview */
+        Interview: {
+            config: components["schemas"]["InterviewConfig-Output"];
+            /** Context Hash */
+            context_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Current Question Id */
+            current_question_id: string | null;
+            /** Cv Content Hash */
+            cv_content_hash: string | null;
+            /** Cv Id */
+            cv_id: string | null;
+            /** End Reason */
+            end_reason: ("user_finished" | "time_limit" | "questions_complete" | "user_cancelled" | "provider_failure") | null;
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Feedback Status
+             * @enum {string}
+             */
+            feedback_status: "not_requested" | "generating" | "ready" | "failed";
+            /** Flow Revision */
+            flow_revision: number;
+            /** Interview Id */
+            interview_id: string;
+            job: components["schemas"]["InterviewJob"];
+            /**
+             * Phase
+             * @enum {string}
+             */
+            phase: "ready" | "active" | "finalizing" | "completed" | "cancelled" | "failed";
+            /** Profile Revision */
+            profile_revision: number;
+            /** Questions */
+            questions: components["schemas"]["InterviewQuestion"][];
+            /** Resume Entries Revision */
+            resume_entries_revision: number;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Session Id */
+            session_id: string;
+            /** Started At */
+            started_at: string | null;
+            /** Transcript Revision */
+            transcript_revision: number;
+            /** Turns */
+            turns: components["schemas"]["TranscriptTurn"][];
+        };
+        /** InterviewConfig */
+        "InterviewConfig-Input": {
+            /**
+             * Duration Minutes
+             * @default 10
+             * @enum {integer}
+             */
+            duration_minutes: 5 | 10 | 15;
+            /**
+             * Interview Type
+             * @default mixed
+             * @enum {string}
+             */
+            interview_type: "behavioural" | "technical" | "mixed";
+            /**
+             * Language
+             * @default en
+             * @constant
+             */
+            language: "en";
+            /**
+             * Main Question Count
+             * @default 4
+             */
+            main_question_count: number;
+            /**
+             * Max Follow Ups Per Question
+             * @default 1
+             */
+            max_follow_ups_per_question: number;
+        };
+        /** InterviewConfig */
+        "InterviewConfig-Output": {
+            /**
+             * Duration Minutes
+             * @default 10
+             * @enum {integer}
+             */
+            duration_minutes: 5 | 10 | 15;
+            /**
+             * Interview Type
+             * @default mixed
+             * @enum {string}
+             */
+            interview_type: "behavioural" | "technical" | "mixed";
+            /**
+             * Language
+             * @default en
+             * @constant
+             */
+            language: "en";
+            /**
+             * Main Question Count
+             * @default 4
+             */
+            main_question_count: number;
+            /**
+             * Max Follow Ups Per Question
+             * @default 1
+             */
+            max_follow_ups_per_question: number;
+        };
+        /** InterviewConsent */
+        InterviewConsent: {
+            /** Retain Transcript For Feedback */
+            retain_transcript_for_feedback: boolean;
+            /** Send Audio To Provider */
+            send_audio_to_provider: boolean;
+        };
+        /** InterviewControlRequest */
+        InterviewControlRequest: {
+            /** Connection Id */
+            connection_id?: string | null;
+            /** Expected Flow Revision */
+            expected_flow_revision: number;
+            /** Request Id */
+            request_id: string;
+        };
+        /** InterviewJob */
+        InterviewJob: {
+            /** Description */
+            description: string;
+            /** Document Id */
+            document_id: string | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "supplied_job" | "pasted_job";
+            /** Title */
+            title: string;
+        };
+        /** InterviewQuestion */
+        InterviewQuestion: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "behavioural" | "technical";
+            /** Fact Ids */
+            fact_ids: string[];
+            /** Job Requirement Excerpt */
+            job_requirement_excerpt: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "main" | "follow_up";
+            /** Parent Question Id */
+            parent_question_id: string | null;
+            /** Question Id */
+            question_id: string;
+            /** Rationale */
+            rationale: string;
+            /** Resume Entry Ids */
+            resume_entry_ids: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "planned" | "issued" | "answered" | "skipped";
+            /** Text */
+            text: string;
+        };
         /** MessageRequest */
         MessageRequest: {
             /** Message */
@@ -433,6 +793,32 @@ export interface components {
             /** Observations */
             observations: components["schemas"]["AgentObservation"][];
             session: components["schemas"]["Session"];
+        };
+        /** NextStepRequest */
+        NextStepRequest: {
+            /** Answer Turn Ids */
+            answer_turn_ids: string[];
+            /** Answered Question Id */
+            answered_question_id: string;
+            /** Connection Id */
+            connection_id?: string | null;
+            /** Expected Flow Revision */
+            expected_flow_revision: number;
+            follow_up_proposal?: components["schemas"]["FollowUpProposal"] | null;
+            /** Request Id */
+            request_id: string;
+        };
+        /** PastedJobRequest */
+        PastedJobRequest: {
+            /** Description */
+            description: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            source: "pasted_job";
+            /** Title */
+            title: string;
         };
         /** ProfileDraft */
         ProfileDraft: {
@@ -587,6 +973,42 @@ export interface components {
          * @enum {string}
          */
         SessionState: "collecting_profile" | "profile_review" | "profile_confirmed" | "resume_entries_review" | "resume_entries_approved" | "jobs_retrieved" | "job_selected" | "cv_draft" | "cv_validated" | "pdf_exported";
+        /** SkipQuestionRequest */
+        SkipQuestionRequest: {
+            /** Connection Id */
+            connection_id?: string | null;
+            /** Expected Flow Revision */
+            expected_flow_revision: number;
+            /** Question Id */
+            question_id: string;
+            /** Request Id */
+            request_id: string;
+        };
+        /** StartInterviewRequest */
+        StartInterviewRequest: {
+            /** Connection Id */
+            connection_id?: string | null;
+            /** Expected Flow Revision */
+            expected_flow_revision: number;
+            /** Request Id */
+            request_id: string;
+        };
+        /** StartInterviewResponse */
+        StartInterviewResponse: {
+            interview: components["schemas"]["Interview"];
+            /** Next Step */
+            next_step: components["schemas"]["AskQuestionStep"] | components["schemas"]["FinishStep"];
+        };
+        /** SuppliedJobRequest */
+        SuppliedJobRequest: {
+            /** Document Id */
+            document_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            source: "supplied_job";
+        };
         /** TraceEvent */
         TraceEvent: {
             /** Details */
@@ -609,6 +1031,71 @@ export interface components {
         TraceResponse: {
             /** Events */
             events: components["schemas"]["TraceEvent"][];
+        };
+        /** TranscriptTiming */
+        TranscriptTiming: {
+            /** Clock Id */
+            clock_id: string;
+            /** End Ms */
+            end_ms: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "provider_vad" | "recording";
+            /** Start Ms */
+            start_ms: number;
+        };
+        /** TranscriptTurn */
+        TranscriptTurn: {
+            /**
+             * Delivery Status
+             * @enum {string}
+             */
+            delivery_status: "complete" | "interrupted" | "unknown" | "not_applicable";
+            /**
+             * Input Mode
+             * @enum {string}
+             */
+            input_mode: "live_voice" | "recorded_audio";
+            /** Question Id */
+            question_id: string;
+            /**
+             * Speaker
+             * @enum {string}
+             */
+            speaker: "interviewer" | "candidate";
+            /** Text */
+            text: string;
+            timing: components["schemas"]["TranscriptTiming"] | null;
+            /**
+             * Transcript Status
+             * @enum {string}
+             */
+            transcript_status: "pending" | "partial" | "final" | "failed";
+            /** Transcript Version */
+            transcript_version: number;
+            /** Turn Id */
+            turn_id: string;
+        };
+        /** TurnEventAck */
+        TurnEventAck: {
+            /** Event Id */
+            event_id: string;
+            /** Transcript Revision */
+            transcript_revision: number;
+            /** Turn Id */
+            turn_id: string;
+        };
+        /** TurnEventRequest */
+        TurnEventRequest: {
+            /** Connection Id */
+            connection_id: string;
+            /** Event Id */
+            event_id: string;
+            /** Previous Turn Id */
+            previous_turn_id: string | null;
+            turn: components["schemas"]["TranscriptTurn"];
         };
         /** ValidationIssue */
         ValidationIssue: {
@@ -1062,6 +1549,577 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Session"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    create_interview_api_sessions__session_id__interviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInterviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    get_interview_api_sessions__session_id__interviews__interview_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    cancel_interview_api_sessions__session_id__interviews__interview_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewControlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    end_interview_api_sessions__session_id__interviews__interview_id__end_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewControlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    next_step_api_sessions__session_id__interviews__interview_id__next_step_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NextStepRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AskQuestionStep"] | components["schemas"]["FinishStep"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    skip_question_api_sessions__session_id__interviews__interview_id__skip_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SkipQuestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AskQuestionStep"] | components["schemas"]["FinishStep"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    start_interview_api_sessions__session_id__interviews__interview_id__start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartInterviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StartInterviewResponse"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    record_turn_api_sessions__session_id__interviews__interview_id__turns_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TurnEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TurnEventAck"];
                 };
             };
             /** @description Session or resource not found */

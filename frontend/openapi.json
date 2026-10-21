@@ -76,6 +76,30 @@
         "title": "ApiErrorDetail",
         "type": "object"
       },
+      "AskQuestionStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "ask_question",
+            "title": "Action",
+            "type": "string"
+          },
+          "flow_revision": {
+            "title": "Flow Revision",
+            "type": "integer"
+          },
+          "question": {
+            "$ref": "#/components/schemas/InterviewQuestion"
+          }
+        },
+        "required": [
+          "action",
+          "question",
+          "flow_revision"
+        ],
+        "title": "AskQuestionStep",
+        "type": "object"
+      },
       "CVClaim-Input": {
         "additionalProperties": false,
         "properties": {
@@ -292,6 +316,61 @@
         "title": "CVSection",
         "type": "object"
       },
+      "CreateInterviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/InterviewConfig-Input"
+          },
+          "consent": {
+            "$ref": "#/components/schemas/InterviewConsent"
+          },
+          "cv_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cv Id"
+          },
+          "job": {
+            "discriminator": {
+              "mapping": {
+                "pasted_job": "#/components/schemas/PastedJobRequest",
+                "supplied_job": "#/components/schemas/SuppliedJobRequest"
+              },
+              "propertyName": "source"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SuppliedJobRequest"
+              },
+              {
+                "$ref": "#/components/schemas/PastedJobRequest"
+              }
+            ],
+            "title": "Job"
+          },
+          "request_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "job",
+          "consent"
+        ],
+        "title": "CreateInterviewRequest",
+        "type": "object"
+      },
       "Fact": {
         "additionalProperties": false,
         "properties": {
@@ -387,6 +466,532 @@
         "title": "FactStatus",
         "type": "string"
       },
+      "FinishStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "finish",
+            "title": "Action",
+            "type": "string"
+          },
+          "flow_revision": {
+            "title": "Flow Revision",
+            "type": "integer"
+          },
+          "reason": {
+            "enum": [
+              "time_limit",
+              "questions_complete"
+            ],
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "reason",
+          "flow_revision"
+        ],
+        "title": "FinishStep",
+        "type": "object"
+      },
+      "FollowUpProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "rationale": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "rationale"
+        ],
+        "title": "FollowUpProposal",
+        "type": "object"
+      },
+      "Interview": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/InterviewConfig-Output"
+          },
+          "context_hash": {
+            "title": "Context Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Question Id"
+          },
+          "cv_content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cv Content Hash"
+          },
+          "cv_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cv Id"
+          },
+          "end_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "user_finished",
+                  "time_limit",
+                  "questions_complete",
+                  "user_cancelled",
+                  "provider_failure"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Reason"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "feedback_status": {
+            "enum": [
+              "not_requested",
+              "generating",
+              "ready",
+              "failed"
+            ],
+            "title": "Feedback Status",
+            "type": "string"
+          },
+          "flow_revision": {
+            "title": "Flow Revision",
+            "type": "integer"
+          },
+          "interview_id": {
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "job": {
+            "$ref": "#/components/schemas/InterviewJob"
+          },
+          "phase": {
+            "enum": [
+              "ready",
+              "active",
+              "finalizing",
+              "completed",
+              "cancelled",
+              "failed"
+            ],
+            "title": "Phase",
+            "type": "string"
+          },
+          "profile_revision": {
+            "title": "Profile Revision",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewQuestion"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "resume_entries_revision": {
+            "title": "Resume Entries Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "transcript_revision": {
+            "title": "Transcript Revision",
+            "type": "integer"
+          },
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptTurn"
+            },
+            "title": "Turns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "schema_version",
+          "session_id",
+          "interview_id",
+          "phase",
+          "flow_revision",
+          "transcript_revision",
+          "context_hash",
+          "profile_revision",
+          "resume_entries_revision",
+          "cv_id",
+          "cv_content_hash",
+          "job",
+          "config",
+          "questions",
+          "current_question_id",
+          "turns",
+          "feedback_status",
+          "created_at",
+          "started_at",
+          "ended_at",
+          "end_reason"
+        ],
+        "title": "Interview",
+        "type": "object"
+      },
+      "InterviewConfig-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_minutes": {
+            "default": 10,
+            "enum": [
+              5,
+              10,
+              15
+            ],
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "interview_type": {
+            "default": "mixed",
+            "enum": [
+              "behavioural",
+              "technical",
+              "mixed"
+            ],
+            "title": "Interview Type",
+            "type": "string"
+          },
+          "language": {
+            "const": "en",
+            "default": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "main_question_count": {
+            "default": 4,
+            "maximum": 6.0,
+            "minimum": 3.0,
+            "title": "Main Question Count",
+            "type": "integer"
+          },
+          "max_follow_ups_per_question": {
+            "default": 1,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Max Follow Ups Per Question",
+            "type": "integer"
+          }
+        },
+        "title": "InterviewConfig",
+        "type": "object"
+      },
+      "InterviewConfig-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_minutes": {
+            "default": 10,
+            "enum": [
+              5,
+              10,
+              15
+            ],
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "interview_type": {
+            "default": "mixed",
+            "enum": [
+              "behavioural",
+              "technical",
+              "mixed"
+            ],
+            "title": "Interview Type",
+            "type": "string"
+          },
+          "language": {
+            "const": "en",
+            "default": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "main_question_count": {
+            "default": 4,
+            "maximum": 6.0,
+            "minimum": 3.0,
+            "title": "Main Question Count",
+            "type": "integer"
+          },
+          "max_follow_ups_per_question": {
+            "default": 1,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Max Follow Ups Per Question",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "interview_type",
+          "duration_minutes",
+          "main_question_count",
+          "max_follow_ups_per_question",
+          "language"
+        ],
+        "title": "InterviewConfig",
+        "type": "object"
+      },
+      "InterviewConsent": {
+        "additionalProperties": false,
+        "properties": {
+          "retain_transcript_for_feedback": {
+            "title": "Retain Transcript For Feedback",
+            "type": "boolean"
+          },
+          "send_audio_to_provider": {
+            "title": "Send Audio To Provider",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "send_audio_to_provider",
+          "retain_transcript_for_feedback"
+        ],
+        "title": "InterviewConsent",
+        "type": "object"
+      },
+      "InterviewControlRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "connection_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Id"
+          },
+          "expected_flow_revision": {
+            "minimum": 0.0,
+            "title": "Expected Flow Revision",
+            "type": "integer"
+          },
+          "request_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_flow_revision"
+        ],
+        "title": "InterviewControlRequest",
+        "type": "object"
+      },
+      "InterviewJob": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "source": {
+            "enum": [
+              "supplied_job",
+              "pasted_job"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "document_id",
+          "title",
+          "description"
+        ],
+        "title": "InterviewJob",
+        "type": "object"
+      },
+      "InterviewQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "behavioural",
+              "technical"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "fact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fact Ids",
+            "type": "array"
+          },
+          "job_requirement_excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Requirement Excerpt"
+          },
+          "kind": {
+            "enum": [
+              "main",
+              "follow_up"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "parent_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Question Id"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "resume_entry_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Resume Entry Ids",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "issued",
+              "answered",
+              "skipped"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_id",
+          "parent_question_id",
+          "kind",
+          "category",
+          "status",
+          "text",
+          "rationale",
+          "fact_ids",
+          "resume_entry_ids",
+          "job_requirement_excerpt"
+        ],
+        "title": "InterviewQuestion",
+        "type": "object"
+      },
       "MessageRequest": {
         "additionalProperties": false,
         "properties": {
@@ -427,6 +1032,99 @@
           "session"
         ],
         "title": "MessageResponse",
+        "type": "object"
+      },
+      "NextStepRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "answer_turn_ids": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Answer Turn Ids",
+            "type": "array"
+          },
+          "answered_question_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Answered Question Id",
+            "type": "string"
+          },
+          "connection_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Id"
+          },
+          "expected_flow_revision": {
+            "minimum": 0.0,
+            "title": "Expected Flow Revision",
+            "type": "integer"
+          },
+          "follow_up_proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FollowUpProposal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "request_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_flow_revision",
+          "answered_question_id",
+          "answer_turn_ids"
+        ],
+        "title": "NextStepRequest",
+        "type": "object"
+      },
+      "PastedJobRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "source": {
+            "const": "pasted_job",
+            "title": "Source",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "title",
+          "description"
+        ],
+        "title": "PastedJobRequest",
         "type": "object"
       },
       "ProfileDraft": {
@@ -928,6 +1626,137 @@
         "title": "SessionState",
         "type": "string"
       },
+      "SkipQuestionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "connection_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Id"
+          },
+          "expected_flow_revision": {
+            "minimum": 0.0,
+            "title": "Expected Flow Revision",
+            "type": "integer"
+          },
+          "question_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "request_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_flow_revision",
+          "question_id"
+        ],
+        "title": "SkipQuestionRequest",
+        "type": "object"
+      },
+      "StartInterviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "connection_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Id"
+          },
+          "expected_flow_revision": {
+            "minimum": 0.0,
+            "title": "Expected Flow Revision",
+            "type": "integer"
+          },
+          "request_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_flow_revision"
+        ],
+        "title": "StartInterviewRequest",
+        "type": "object"
+      },
+      "StartInterviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "interview": {
+            "$ref": "#/components/schemas/Interview"
+          },
+          "next_step": {
+            "discriminator": {
+              "mapping": {
+                "ask_question": "#/components/schemas/AskQuestionStep",
+                "finish": "#/components/schemas/FinishStep"
+              },
+              "propertyName": "action"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AskQuestionStep"
+              },
+              {
+                "$ref": "#/components/schemas/FinishStep"
+              }
+            ],
+            "title": "Next Step"
+          }
+        },
+        "required": [
+          "interview",
+          "next_step"
+        ],
+        "title": "StartInterviewResponse",
+        "type": "object"
+      },
+      "SuppliedJobRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "document_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Document Id",
+            "type": "string"
+          },
+          "source": {
+            "const": "supplied_job",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "document_id"
+        ],
+        "title": "SuppliedJobRequest",
+        "type": "object"
+      },
       "TraceEvent": {
         "additionalProperties": false,
         "properties": {
@@ -979,6 +1808,194 @@
           "events"
         ],
         "title": "TraceResponse",
+        "type": "object"
+      },
+      "TranscriptTiming": {
+        "additionalProperties": false,
+        "properties": {
+          "clock_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Clock Id",
+            "type": "string"
+          },
+          "end_ms": {
+            "minimum": 0.0,
+            "title": "End Ms",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "provider_vad",
+              "recording"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "start_ms": {
+            "minimum": 0.0,
+            "title": "Start Ms",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "clock_id",
+          "start_ms",
+          "end_ms",
+          "source"
+        ],
+        "title": "TranscriptTiming",
+        "type": "object"
+      },
+      "TranscriptTurn": {
+        "additionalProperties": false,
+        "properties": {
+          "delivery_status": {
+            "enum": [
+              "complete",
+              "interrupted",
+              "unknown",
+              "not_applicable"
+            ],
+            "title": "Delivery Status",
+            "type": "string"
+          },
+          "input_mode": {
+            "enum": [
+              "live_voice",
+              "recorded_audio"
+            ],
+            "title": "Input Mode",
+            "type": "string"
+          },
+          "question_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "speaker": {
+            "enum": [
+              "interviewer",
+              "candidate"
+            ],
+            "title": "Speaker",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 20000,
+            "title": "Text",
+            "type": "string"
+          },
+          "timing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptTiming"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transcript_status": {
+            "enum": [
+              "pending",
+              "partial",
+              "final",
+              "failed"
+            ],
+            "title": "Transcript Status",
+            "type": "string"
+          },
+          "transcript_version": {
+            "minimum": 1.0,
+            "title": "Transcript Version",
+            "type": "integer"
+          },
+          "turn_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Turn Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "turn_id",
+          "question_id",
+          "speaker",
+          "input_mode",
+          "transcript_version",
+          "transcript_status",
+          "text",
+          "delivery_status",
+          "timing"
+        ],
+        "title": "TranscriptTurn",
+        "type": "object"
+      },
+      "TurnEventAck": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "transcript_revision": {
+            "title": "Transcript Revision",
+            "type": "integer"
+          },
+          "turn_id": {
+            "title": "Turn Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "turn_id",
+          "transcript_revision"
+        ],
+        "title": "TurnEventAck",
+        "type": "object"
+      },
+      "TurnEventRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "connection_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "event_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Event Id",
+            "type": "string"
+          },
+          "previous_turn_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Turn Id"
+          },
+          "turn": {
+            "$ref": "#/components/schemas/TranscriptTurn"
+          }
+        },
+        "required": [
+          "event_id",
+          "connection_id",
+          "previous_turn_id",
+          "turn"
+        ],
+        "title": "TurnEventRequest",
         "type": "object"
       },
       "ValidationIssue": {
@@ -1608,6 +2625,811 @@
           }
         },
         "summary": "Validate Cv"
+      }
+    },
+    "/api/sessions/{session_id}/interviews": {
+      "post": {
+        "operationId": "create_interview_api_sessions__session_id__interviews_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInterviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Create Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}": {
+      "get": {
+        "operationId": "get_interview_api_sessions__session_id__interviews__interview_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Get Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/cancel": {
+      "post": {
+        "operationId": "cancel_interview_api_sessions__session_id__interviews__interview_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewControlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Cancel Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/end": {
+      "post": {
+        "operationId": "end_interview_api_sessions__session_id__interviews__interview_id__end_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewControlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "End Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/next-step": {
+      "post": {
+        "operationId": "next_step_api_sessions__session_id__interviews__interview_id__next_step_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NextStepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AskQuestionStep"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FinishStep"
+                    }
+                  ],
+                  "title": "Response Next Step Api Sessions  Session Id  Interviews  Interview Id  Next Step Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Next Step",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/skip": {
+      "post": {
+        "operationId": "skip_question_api_sessions__session_id__interviews__interview_id__skip_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkipQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AskQuestionStep"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FinishStep"
+                    }
+                  ],
+                  "title": "Response Skip Question Api Sessions  Session Id  Interviews  Interview Id  Skip Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Skip Question",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/start": {
+      "post": {
+        "operationId": "start_interview_api_sessions__session_id__interviews__interview_id__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartInterviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartInterviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Start Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/turns": {
+      "post": {
+        "operationId": "record_turn_api_sessions__session_id__interviews__interview_id__turns_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnEventAck"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Record Turn",
+        "tags": [
+          "interviews"
+        ]
       }
     },
     "/api/sessions/{session_id}/jobs/retrieve": {

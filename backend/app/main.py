@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import Field, field_validator
 
+from app.api.interviews import build_interview_router, register_interview_error_handlers
 from app.domain.models import (
     AgentObservation,
     CVDocument,
@@ -30,10 +31,17 @@ from app.providers.base import (
     AgentModelProvider,
     ProviderError,
 )
+from app.providers.openai_interview_planner import OpenAIQuestionPlanner
 from app.providers.openai_provider import OpenAIEmbeddingProvider, OpenAIModelProvider
 from app.providers.unavailable import MissingOpenAIProvider
 from app.services.agent import AgentService, AgentStepLimitError
 from app.services.cv import CVEvidenceError, CVService
+from app.services.interview_flow import InterviewFlowService
+from app.services.question_planner import (
+    QuestionPlanner,
+    TemplateQuestionPlanner,
+    UnavailableQuestionPlanner,
+)
 from app.services.resume_entries import ResumeEntryEvidenceError, ResumeEntryService
 from app.services.retrieval import (
     JobRepository,
@@ -104,11 +112,19 @@ class ApplicationServices:
     cv: CVService
     resume_entries: ResumeEntryService
     agent_provider: AgentModelProvider
+    # A3 interview flow. Offline callers (tests, demo) default to the template planner.
+    question_planner: QuestionPlanner | None = None
     agent: AgentService = field(init=False)
+    interviews: InterviewFlowService = field(init=False)
     _jobs_by_id: dict[str, Job] = field(init=False)
 
     def __post_init__(self) -> None:
         self._jobs_by_id = {job.document_id: job for job in self.jobs}
+        self.interviews = InterviewFlowService(
+            self.workflow,
+            self.jobs,
+            self.question_planner or TemplateQuestionPlanner(),
+        )
         self.agent = AgentService(
             self.workflow,
             self.agent_provider,
@@ -156,9 +172,14 @@ def build_default_services(settings: Settings | None = None) -> ApplicationServi
             model=selected.openai_embedding_model,
             api_key=selected.openai_api_key,
         )
+        question_planner: QuestionPlanner = OpenAIQuestionPlanner(
+            model=selected.openai_model,
+            api_key=selected.openai_api_key,
+        )
     else:
         model_provider = MissingOpenAIProvider()
         embedding_provider = model_provider
+        question_planner = UnavailableQuestionPlanner()
     cv_service = CVService(workflow, model_provider)
     return ApplicationServices(
         workflow=workflow,
@@ -167,6 +188,7 @@ def build_default_services(settings: Settings | None = None) -> ApplicationServi
         cv=cv_service,
         resume_entries=ResumeEntryService(workflow, model_provider),
         agent_provider=model_provider,
+        question_planner=question_planner,
     )
 
 
@@ -199,6 +221,9 @@ def create_app(services: ApplicationServices | None = None) -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type"],
     )
+
+    register_interview_error_handlers(app)
+    app.include_router(build_interview_router(active.interviews))
 
     @app.exception_handler(SessionNotFoundError)
     async def session_not_found(_request: Request, _error: SessionNotFoundError) -> JSONResponse:
