@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from openai import OpenAI
@@ -45,6 +46,14 @@ For each question also return:
   the question targets, or null. Never paraphrase inside this field.
 If problems_from_previous_attempt is not empty, fix every listed problem.
 """
+
+
+INTERVIEW_MODEL_ENV = "OPENAI_INTERVIEW_MODEL"
+
+
+def interview_model(default_model: str) -> str:
+    """Text model for question planning: ``OPENAI_INTERVIEW_MODEL`` or the app's text model."""
+    return (os.getenv(INTERVIEW_MODEL_ENV) or "").strip() or default_model
 
 
 def _entry_payload(entry: ResumeEntry) -> dict[str, Any]:

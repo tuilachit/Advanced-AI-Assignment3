@@ -13,7 +13,10 @@ Interface Contract v1* (sections 3–6 and 9).
 | `backend/app/services/question_planner.py` | Planner protocol, plan validation, offline template planner |
 | `backend/app/providers/openai_interview_planner.py` | OpenAI structured-output question planner and its prompt |
 | `backend/app/api/interviews.py` | FastAPI routes and the interview error handler |
-| `backend/tests/test_interview_flow.py` | 35 offline tests for this component |
+| `backend/tests/test_interview_flow.py` | 51 offline tests for this component |
+| `scripts/evaluate_question_plans.py` | Question-plan evaluation across the 5 synthetic profiles and several jobs |
+| `scripts/interview_cli.py` | Text-mode practice interview that drives the flow without voice or UI |
+| `scripts/interview_flow_tools.py` | Shared helpers for the two scripts (profile → confirmed facts and approved entries) |
 
 `backend/app/main.py` only wires the service and router in. Existing CV Builder routes are unchanged.
 
@@ -49,14 +52,19 @@ Interface Contract v1* (sections 3–6 and 9).
    interview is stored.
 3. **Progress.** This service is the only authority for question order. `next-step` accepts a
    follow-up proposal from the voice agent only while the main question is below
-   `max_follow_ups_per_question` (0–2) and the text is not a repeat; otherwise the next planned
-   main question is issued, or the interview finishes with `questions_complete`. Answers must
+   `max_follow_ups_per_question` (0–2), the text is not a repeat, and it passes the follow-up
+   policy (`follow_up_problem`): at most 300 characters, an actual question, and no personal
+   or protected topic such as age, nationality, visa, religion, family, health or disability.
+   A rejected proposal is not recorded; the next planned main question is issued instead, or
+   the interview finishes with `questions_complete`. Answers must
    be final candidate turns registered for the current question and not used before;
    `transcript_pending` (retryable, same `request_id`) and `transcript_failed` are returned
    instead of inventing an answer.
-4. **Time limit.** `start` sets a deadline (5/10/15 minutes). Every request that touches the
-   interview checks it; on expiry no new question is issued, captured answers for the current
-   question are submitted and the interview ends with `time_limit`.
+4. **Time limit.** `start` sets a deadline (5/10/15 minutes) and schedules a deadline task, so
+   the interview is finalized on time even if no request arrives (for example, the candidate
+   stays silent). Every request also checks the deadline. No new question is issued when less
+   than 30 seconds remain. On expiry captured answers for the current question are submitted
+   and the interview ends with `time_limit`.
 5. **Finalize.** `end` (or a deadline/finish) stops new questions and waits up to 10 seconds for
    registered pending transcripts. Transcripts that never finalize are marked `failed`, never
    filled in. The current question's final answer is submitted once, even without a
@@ -82,11 +90,32 @@ Interface Contract v1* (sections 3–6 and 9).
 
 - Consent: both consent values are stored with the interview and required by `start` (live audio
   cannot begin without them).
-- No background timer task: the deadline and the 10-second drain are enforced whenever the
-  interview is read or changed. The UI's `GET` polling during finalization is therefore enough.
-- The model planner uses the existing `OPENAI_MODEL`. Without an API key, creation returns 503.
+- Deadline and drain timers run in a background thread (`threading.Timer`) and are also enforced
+  on every read/change, so a missed timer cannot leave an interview running past its limit.
+- The question planner uses `OPENAI_INTERVIEW_MODEL` when it is set, otherwise the existing
+  `OPENAI_MODEL`. Without an API key, creation returns 503. A test checks that the plan schema
+  converts to OpenAI strict structured-output format offline.
   Tests and the local demo use `TemplateQuestionPlanner`, which only reuses approved-entry and
   job wording and is far less natural.
 - Not yet run against the live OpenAI API (no key on the author's machine). Before merging,
-  run one interview creation with a real key and check the questions.
+  run one interview creation with a real key and check the questions, e.g.
+  `python scripts/evaluate_question_plans.py --planner openai`.
 - In-memory only: a backend restart loses interviews, as with existing sessions.
+
+## Scripts
+
+Run from the project root with the virtual environment active.
+
+```bash
+# Question-plan evaluation (offline baseline; add --planner openai with a key)
+python scripts/evaluate_question_plans.py --planner template
+# Text-mode practice interview (typed answers stand in for voice transcripts)
+python scripts/interview_cli.py --profile 1 --job graduate_ai_engineer
+```
+
+The evaluation writes `docs/evidence/a3_interview_flow/question_plans_<planner>_<time>.{md,json}`.
+The committed template-planner run (5 profiles × 3 jobs, mixed, 4 questions) is a baseline only:
+15/15 valid plans, 60 questions, 36 citing approved evidence, 30 with a verbatim JD excerpt,
+0 with sensitive wording, and no job pair with an identical plan for the same candidate. The
+template planner links requirements to entries by shared keywords, so some links are weak; the
+model planner must be evaluated separately with a live key.

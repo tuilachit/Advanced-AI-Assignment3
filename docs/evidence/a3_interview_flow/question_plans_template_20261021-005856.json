@@ -1,0 +1,1237 @@
+{
+  "generated_at": "2026-10-21T00:58:56+00:00",
+  "planner": "template",
+  "config": {
+    "interview_type": "mixed",
+    "main_question_count": 4
+  },
+  "jobs": [
+    "graduate_ai_engineer",
+    "computer_vision_engineer",
+    "healthcare_ml_engineer"
+  ],
+  "summary": {
+    "plans": 15,
+    "valid_plans": 15,
+    "questions": 60,
+    "personalised_questions": 36,
+    "questions_with_jd_excerpt": 30,
+    "sensitive_questions": 0,
+    "job_pairs": 15,
+    "job_pairs_with_identical_plans": 0,
+    "mean_identical_questions_per_job_pair": 1.0
+  },
+  "job_pair_overlap": [
+    {
+      "profile": "student_profile_01",
+      "jobs": [
+        "graduate_ai_engineer",
+        "computer_vision_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.569
+    },
+    {
+      "profile": "student_profile_01",
+      "jobs": [
+        "graduate_ai_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.606
+    },
+    {
+      "profile": "student_profile_01",
+      "jobs": [
+        "computer_vision_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.643
+    },
+    {
+      "profile": "student_profile_02",
+      "jobs": [
+        "graduate_ai_engineer",
+        "computer_vision_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.426
+    },
+    {
+      "profile": "student_profile_02",
+      "jobs": [
+        "graduate_ai_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.623
+    },
+    {
+      "profile": "student_profile_02",
+      "jobs": [
+        "computer_vision_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.475
+    },
+    {
+      "profile": "student_profile_03",
+      "jobs": [
+        "graduate_ai_engineer",
+        "computer_vision_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.446
+    },
+    {
+      "profile": "student_profile_03",
+      "jobs": [
+        "graduate_ai_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.556
+    },
+    {
+      "profile": "student_profile_03",
+      "jobs": [
+        "computer_vision_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.452
+    },
+    {
+      "profile": "student_profile_04",
+      "jobs": [
+        "graduate_ai_engineer",
+        "computer_vision_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.426
+    },
+    {
+      "profile": "student_profile_04",
+      "jobs": [
+        "graduate_ai_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.58
+    },
+    {
+      "profile": "student_profile_04",
+      "jobs": [
+        "computer_vision_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.5
+    },
+    {
+      "profile": "student_profile_05",
+      "jobs": [
+        "graduate_ai_engineer",
+        "computer_vision_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.408
+    },
+    {
+      "profile": "student_profile_05",
+      "jobs": [
+        "graduate_ai_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.639
+    },
+    {
+      "profile": "student_profile_05",
+      "jobs": [
+        "computer_vision_engineer",
+        "healthcare_ml_engineer"
+      ],
+      "identical_questions": 1,
+      "token_jaccard": 0.452
+    }
+  ],
+  "runs": [
+    {
+      "profile": "student_profile_01",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-b4697de0-a808-467e-be26-f9719f73ff63",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Graduate AI Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-1cb7c56c-6d24-42ba-ab40-0811462c2657",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning\". Which parts of Team Course Planner are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": "knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning"
+        },
+        {
+          "question_id": "question-415bc1e9-b1eb-4b5e-89e1-42dc5f8863f5",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Team Course Planner. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-ba321db8-8cb5-4cbe-8423-1a9d3c89401a",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python with NumPy, Pandas, scikit-learn, and PyTorch\". Which parts of Team Course Planner are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": "Python with NumPy, Pandas, scikit-learn, and PyTorch"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_01",
+      "job": "computer_vision_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-05e3b8b3-1df6-4cc5-b5ca-a53fa8e9ce5b",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the AI Computer Vision Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-e6d2db62-b8ba-4977-a0dc-71b2f3134a4c",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python\". Which parts of Team Course Planner are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": "Python"
+        },
+        {
+          "question_id": "question-cf64e7d7-6c82-45ba-8aed-899b534edab1",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Team Course Planner. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-a2da4b96-d8e5-4847-bbc8-6ca75c69de5c",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"OpenCV\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "OpenCV"
+        }
+      ],
+      "personalised": 2,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_01",
+      "job": "healthcare_ml_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-c0fc4812-39f6-4a27-9d39-a5e288d34029",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Machine Learning Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-2163adeb-5f48-4934-9b50-b507a6ddd2e5",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"strong knowledge of machine-learning fundamentals, feature engineering, and evaluation\". Which parts of Team Course Planner are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": "strong knowledge of machine-learning fundamentals, feature engineering, and evaluation"
+        },
+        {
+          "question_id": "question-14986638-3120-49ba-bad9-fbe2c71f62e2",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Team Course Planner. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-9f9f49c8-8c5e-4f55-b561-ecd6333c1388",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"experience deploying and operating models\". Which parts of Team Course Planner are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-e9b8a718-9e04-4852-a019-95c418c6bd51"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1343e770-3510-4fff-89e9-17e5f44aeb79"
+          ],
+          "job_requirement_excerpt": "experience deploying and operating models"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_02",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-1e7e9b79-c3cd-4ca8-ae4a-ed09922625b2",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Graduate AI Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-47533409-da52-4223-bf88-0576be5cb164",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning\". Which parts of Coursework Retrieval Assistant are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-04c4e0ff-4f4d-4c32-a358-d9582eefff7a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3b6dda77-2b50-4eac-968f-c2560f8ead35"
+          ],
+          "job_requirement_excerpt": "knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning"
+        },
+        {
+          "question_id": "question-0a87d84d-7f62-4309-a338-3725f8246f53",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Coursework Retrieval Assistant. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-04c4e0ff-4f4d-4c32-a358-d9582eefff7a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3b6dda77-2b50-4eac-968f-c2560f8ead35"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-459bbae6-2818-4343-99df-71c6bd72ee61",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python with NumPy, Pandas, scikit-learn, and PyTorch\". Which parts of Text Classification Study are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-60265a98-f260-4469-8c78-202987741786"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1dbf12c7-1fbe-4350-b9e4-592536c32b10"
+          ],
+          "job_requirement_excerpt": "Python with NumPy, Pandas, scikit-learn, and PyTorch"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_02",
+      "job": "computer_vision_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-c091eda0-f370-4a73-b292-edc5a4a1e054",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the AI Computer Vision Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-fcdaadc1-90cb-4421-a70b-d6e3b499d223",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "Python"
+        },
+        {
+          "question_id": "question-809f37df-7c85-4154-a593-47ade87d84dc",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Coursework Retrieval Assistant. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-04c4e0ff-4f4d-4c32-a358-d9582eefff7a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3b6dda77-2b50-4eac-968f-c2560f8ead35"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-29cc8aaf-822b-4bda-aa8d-0cebf8856e02",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"OpenCV\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "OpenCV"
+        }
+      ],
+      "personalised": 1,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_02",
+      "job": "healthcare_ml_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-43c6851e-d67f-46c1-8efe-7bd4a32b17a0",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Machine Learning Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-a591e6bb-3d04-4220-8385-04acc3b46cb5",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"strong knowledge of machine-learning fundamentals, feature engineering, and evaluation\". Which parts of Coursework Retrieval Assistant are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-04c4e0ff-4f4d-4c32-a358-d9582eefff7a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3b6dda77-2b50-4eac-968f-c2560f8ead35"
+          ],
+          "job_requirement_excerpt": "strong knowledge of machine-learning fundamentals, feature engineering, and evaluation"
+        },
+        {
+          "question_id": "question-c9b95eed-5293-4c16-808e-c938acd34fea",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Coursework Retrieval Assistant. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-04c4e0ff-4f4d-4c32-a358-d9582eefff7a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3b6dda77-2b50-4eac-968f-c2560f8ead35"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-d397d4dc-2418-4bc7-b7ff-a8bed2d186da",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"experience deploying and operating models\". Which parts of Text Classification Study are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-60265a98-f260-4469-8c78-202987741786"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1dbf12c7-1fbe-4350-b9e4-592536c32b10"
+          ],
+          "job_requirement_excerpt": "experience deploying and operating models"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_03",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-01ad6c5f-faa6-4e7a-9d80-0666a3d65865",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Graduate AI Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-941e77be-15e0-4bbd-a7de-65bef2cfd8f7",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning\". Which parts of Student Services Dashboard are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-f80b0e00-236c-46bf-a4ba-e1d2cb568801"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-aecdbd2e-f133-4950-96c7-bbaa2a82ddd0"
+          ],
+          "job_requirement_excerpt": "knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning"
+        },
+        {
+          "question_id": "question-1f073e56-aa1b-4153-9075-eb2c9bd0f8a9",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Student Services Dashboard. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-f80b0e00-236c-46bf-a4ba-e1d2cb568801"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-aecdbd2e-f133-4950-96c7-bbaa2a82ddd0"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-6e1550e2-f802-4190-b475-777d6fe34591",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python with NumPy, Pandas, scikit-learn, and PyTorch\". Which parts of Student Services Dashboard are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-f80b0e00-236c-46bf-a4ba-e1d2cb568801"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-aecdbd2e-f133-4950-96c7-bbaa2a82ddd0"
+          ],
+          "job_requirement_excerpt": "Python with NumPy, Pandas, scikit-learn, and PyTorch"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_03",
+      "job": "computer_vision_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-1ec37c25-08b9-4649-a639-e7c3236b3cad",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the AI Computer Vision Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-c893975e-6fac-44f3-b160-477c6275d43c",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "Python"
+        },
+        {
+          "question_id": "question-063f4beb-2858-43cc-8215-0253a80dcb91",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Student Services Dashboard. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-f80b0e00-236c-46bf-a4ba-e1d2cb568801"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-aecdbd2e-f133-4950-96c7-bbaa2a82ddd0"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-5ba75121-72e0-4a23-aec2-4761c8935ba6",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"OpenCV\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "OpenCV"
+        }
+      ],
+      "personalised": 1,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_03",
+      "job": "healthcare_ml_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-70e0ef9a-c96e-40bb-8189-3685ca61575b",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Machine Learning Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-af40a57b-1a30-4c3d-b3b1-75993ef7aea2",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"strong knowledge of machine-learning fundamentals, feature engineering, and evaluation\". Which parts of Peer Learning Volunteer, Fictional university study program are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-88fa26c2-1782-4a51-86f6-443cd7a459ea"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-b6bafa73-ca98-4137-b608-0b7d80c88c71"
+          ],
+          "job_requirement_excerpt": "strong knowledge of machine-learning fundamentals, feature engineering, and evaluation"
+        },
+        {
+          "question_id": "question-eb814f7f-fbdd-4920-9545-53ffccabf9be",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Student Services Dashboard. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-f80b0e00-236c-46bf-a4ba-e1d2cb568801"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-aecdbd2e-f133-4950-96c7-bbaa2a82ddd0"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-af9710b7-013a-455f-b8f3-f1758375fd6e",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"experience deploying and operating models\". Which parts of Student Services Dashboard are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-f80b0e00-236c-46bf-a4ba-e1d2cb568801"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-aecdbd2e-f133-4950-96c7-bbaa2a82ddd0"
+          ],
+          "job_requirement_excerpt": "experience deploying and operating models"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_04",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-8cc9ec07-4db3-4483-b4cc-97a02555bb25",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Graduate AI Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-b0f6c3d6-56ef-439d-8d1b-1b868c215c47",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning\". Which parts of Network Monitoring Exercise are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-b8bb15a3-ce1f-40d8-a3c8-6e4c0c4c459d"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0479e6ba-2c55-4752-ba7c-4ac5ca93c462"
+          ],
+          "job_requirement_excerpt": "knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning"
+        },
+        {
+          "question_id": "question-74afe543-dc33-4ae8-b1cd-7cc15559a15b",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Network Monitoring Exercise. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-b8bb15a3-ce1f-40d8-a3c8-6e4c0c4c459d"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0479e6ba-2c55-4752-ba7c-4ac5ca93c462"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-d88ee218-0acd-495e-96c3-583d93631113",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python with NumPy, Pandas, scikit-learn, and PyTorch\". Which parts of Reliable Course Service are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-8f81597e-a9a8-4e92-a1bf-52ea4f8e8342"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-013e086a-38c7-4cd2-bae8-cbf55357337b"
+          ],
+          "job_requirement_excerpt": "Python with NumPy, Pandas, scikit-learn, and PyTorch"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_04",
+      "job": "computer_vision_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-442985e4-3153-44cd-aeb3-703bd90e55e1",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the AI Computer Vision Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-70b236c6-76af-420f-8052-3417d2683783",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "Python"
+        },
+        {
+          "question_id": "question-32a9b789-f0bc-4769-848f-d8fc3445c4b3",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Network Monitoring Exercise. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-b8bb15a3-ce1f-40d8-a3c8-6e4c0c4c459d"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0479e6ba-2c55-4752-ba7c-4ac5ca93c462"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-e90cab29-6640-44aa-b57f-8333f5a66a11",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"OpenCV\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "OpenCV"
+        }
+      ],
+      "personalised": 1,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_04",
+      "job": "healthcare_ml_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-66de8297-b343-46fe-aae4-fa09da4736f7",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Machine Learning Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-f60034f2-b19f-4898-a93a-9549810805b6",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"strong knowledge of machine-learning fundamentals, feature engineering, and evaluation\". Which parts of Network Monitoring Exercise are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-b8bb15a3-ce1f-40d8-a3c8-6e4c0c4c459d"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0479e6ba-2c55-4752-ba7c-4ac5ca93c462"
+          ],
+          "job_requirement_excerpt": "strong knowledge of machine-learning fundamentals, feature engineering, and evaluation"
+        },
+        {
+          "question_id": "question-a4fd842c-bf94-451e-97d9-7b3cff95f5ea",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Network Monitoring Exercise. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-b8bb15a3-ce1f-40d8-a3c8-6e4c0c4c459d"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0479e6ba-2c55-4752-ba7c-4ac5ca93c462"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-79edc228-a210-4659-8a4f-71618d441ca6",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"experience deploying and operating models\". Which parts of Network Monitoring Exercise are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-b8bb15a3-ce1f-40d8-a3c8-6e4c0c4c459d"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0479e6ba-2c55-4752-ba7c-4ac5ca93c462"
+          ],
+          "job_requirement_excerpt": "experience deploying and operating models"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_05",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-d5cabeaf-f9c5-40f9-945e-8ae591c562f8",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Graduate AI Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-8eeb32e2-dad6-4a5c-ba8f-977eb7743113",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning\". Which parts of Team Service Platform are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-b171b609-463b-4a20-927c-16df2976c30c"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3add0c38-4cc9-4a1f-bcec-f1cb0018f699"
+          ],
+          "job_requirement_excerpt": "knowledge of machine-learning fundamentals, statistics, data analysis, agentic AI, LLMs, RAG, and domain-specific fine-tuning"
+        },
+        {
+          "question_id": "question-bf4890fb-b61b-4175-b4c9-9a2e284bb260",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Team Service Platform. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-b171b609-463b-4a20-927c-16df2976c30c"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3add0c38-4cc9-4a1f-bcec-f1cb0018f699"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-1ffc744c-8387-46c4-b416-4ffad76c7b95",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python with NumPy, Pandas, scikit-learn, and PyTorch\". Which parts of Software Development Cadet, Fictional technology company are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-0ad9eff1-7858-4382-a057-690712b01cee"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-52419ffa-cb00-44eb-9efc-c480983fa81b"
+          ],
+          "job_requirement_excerpt": "Python with NumPy, Pandas, scikit-learn, and PyTorch"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_05",
+      "job": "computer_vision_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-a36c5845-755e-4ebd-abfb-3690e017173f",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the AI Computer Vision Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-575bcb86-7038-42c0-b1f3-930170f64c65",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"Python\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "Python"
+        },
+        {
+          "question_id": "question-bbf5c4b9-965e-4db5-b3fe-3d5127eecfb1",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Team Service Platform. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-b171b609-463b-4a20-927c-16df2976c30c"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3add0c38-4cc9-4a1f-bcec-f1cb0018f699"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-c63b7a06-965e-484b-b4f7-3febca118ffe",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"OpenCV\". How would you approach this in practice, and what would you check first?",
+          "rationale": "Probes a job requirement without assuming candidate experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "OpenCV"
+        }
+      ],
+      "personalised": 1,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_05",
+      "job": "healthcare_ml_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-b0040f65-fb0d-49a9-ace8-56e49a408ed4",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Why are you interested in the Machine Learning Engineer role, and what do you think you would bring to it?",
+          "rationale": "Opening motivation question based on the target role title.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-287d8974-673e-4146-95cd-efe5eafa2e41",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"strong knowledge of machine-learning fundamentals, feature engineering, and evaluation\". Which parts of Software Development Cadet, Fictional technology company are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-0ad9eff1-7858-4382-a057-690712b01cee"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-52419ffa-cb00-44eb-9efc-c480983fa81b"
+          ],
+          "job_requirement_excerpt": "strong knowledge of machine-learning fundamentals, feature engineering, and evaluation"
+        },
+        {
+          "question_id": "question-b83bd149-ebb8-4077-8887-9bcd4d8db75f",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about Team Service Platform. What was your own contribution, what challenge did you face, and what was the result?",
+          "rationale": "Asks the candidate to expand an approved resume entry using STAR.",
+          "fact_ids": [
+            "fact-b171b609-463b-4a20-927c-16df2976c30c"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-3add0c38-4cc9-4a1f-bcec-f1cb0018f699"
+          ],
+          "job_requirement_excerpt": null
+        },
+        {
+          "question_id": "question-10bac78e-8a29-4ea0-954d-6ed99b3e5042",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "This role mentions \"experience deploying and operating models\". Which parts of Software Development Cadet, Fictional technology company are most relevant to that, and how would you build on them here?",
+          "rationale": "Links a job requirement to an approved entry with shared keywords.",
+          "fact_ids": [
+            "fact-0ad9eff1-7858-4382-a057-690712b01cee"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-52419ffa-cb00-44eb-9efc-c480983fa81b"
+          ],
+          "job_requirement_excerpt": "experience deploying and operating models"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 2,
+      "categories": {
+        "behavioural": 2,
+        "technical": 2
+      },
+      "sensitive": []
+    }
+  ]
+}

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import threading
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -48,6 +49,50 @@ from app.services.question_planner import QuestionPlanner, validate_plan
 
 FINALIZE_DRAIN_SECONDS = 10
 PLAN_ATTEMPTS = 2
+
+QUESTION_TIME_BUFFER_SECONDS = 30
+"""No new question is issued when less time than this remains; the interview finishes instead."""
+
+FOLLOW_UP_MAX_CHARS = 300
+
+_SENSITIVE_FOLLOW_UP = re.compile(
+    # Personal characteristics an interviewer must not ask about. Phrases are specific so that
+    # technical wording ("race condition", "child nodes", "health data") is not blocked.
+    r"\b(how old|your age|age are you|where were you born|your birthday|nationality|"
+    r"citizen\w*|visa|immigration status|religio\w*|pregnan\w*|married|marital|"
+    r"your (?:spouse|husband|wife|partner|children|kids|family|race|ethnicity|gender|"
+    r"health|disability|sexuality)|have (?:children|kids)|family plans?|disabilit\w* do you|"
+    r"medical condition|sexual orientation|political (?:views|party)|union member\w*|"
+    r"salary history)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def follow_up_problem(text: str) -> str | None:
+    """Return why a proposed follow-up must not be asked, or ``None`` when it is acceptable.
+
+    Follow-ups come from the live voice model, so they are checked here before they become part
+    of the interview record. Rejected proposals never stop the interview: the flow simply moves
+    to the next planned question.
+    """
+    cleaned = " ".join(text.split())
+    if len(cleaned) > FOLLOW_UP_MAX_CHARS:
+        return "too_long"
+    if "?" not in cleaned or len(cleaned.split()) < 3:
+        return "not_a_question"
+    if _SENSITIVE_FOLLOW_UP.search(cleaned):
+        return "sensitive_topic"
+    return None
+
+
+Scheduler = Callable[[float, Callable[[], None]], None]
+"""Runs a callback after a delay in seconds. Tests replace it to trigger timers manually."""
+
+
+def thread_scheduler(delay_seconds: float, callback: Callable[[], None]) -> None:
+    timer = threading.Timer(max(delay_seconds, 0.0), callback)
+    timer.daemon = True
+    timer.start()
 
 _READY_FOR_INTERVIEW = {
     SessionState.RESUME_ENTRIES_APPROVED,
@@ -141,11 +186,13 @@ class InterviewFlowService:
         planner: QuestionPlanner,
         *,
         clock: Callable[[], datetime] | None = None,
+        scheduler: Scheduler | None = None,
     ) -> None:
         self._workflow = workflow
         self._jobs = {job.document_id: job for job in jobs}
         self._planner = planner
         self._clock = clock or (lambda: datetime.now(UTC))
+        self._scheduler = scheduler or thread_scheduler
         self._records: dict[str, _InterviewRecord] = {}
         self._create_keys: dict[tuple[str, str], str] = {}
         self._lock = threading.RLock()
@@ -438,6 +485,7 @@ class InterviewFlowService:
             interview.phase = "active"
             interview.started_at = now
             record.deadline_at = now + timedelta(minutes=interview.config.duration_minutes)
+            self._schedule_check(record, record.deadline_at)
             if request.connection_id is not None:
                 record.active_connection_id = request.connection_id
             first = next(q for q in interview.questions if q.kind == "main")
@@ -620,7 +668,7 @@ class InterviewFlowService:
         request: NextStepRequest,
     ) -> AskQuestionStep | FinishStep:
         interview = record.interview
-        if self._time_is_up(record):
+        if self._time_is_up(record, QUESTION_TIME_BUFFER_SECONDS):
             interview.current_question_id = None
             self._begin_finalization(record, "time_limit")
             return FinishStep(
@@ -634,6 +682,7 @@ class InterviewFlowService:
             proposal is not None
             and len(follow_ups) < interview.config.max_follow_ups_per_question
             and " ".join(proposal.text.split()).casefold() not in existing_texts
+            and follow_up_problem(proposal.text) is None
         ):
             root = self._question(record, root_id)
             follow_up = InterviewQuestion(
@@ -665,7 +714,7 @@ class InterviewFlowService:
 
     def _advance_main(self, record: _InterviewRecord) -> AskQuestionStep | FinishStep:
         interview = record.interview
-        if self._time_is_up(record):
+        if self._time_is_up(record, QUESTION_TIME_BUFFER_SECONDS):
             interview.current_question_id = None
             self._begin_finalization(record, "time_limit")
             return FinishStep(
@@ -692,8 +741,25 @@ class InterviewFlowService:
 
     # ------------------------------------------------------------------ time and finalization
 
-    def _time_is_up(self, record: _InterviewRecord) -> bool:
-        return record.deadline_at is not None and self._now() >= record.deadline_at
+    def _schedule_check(self, record: _InterviewRecord, when: datetime) -> None:
+        """Deadline task: re-check the interview at ``when`` even if no request arrives."""
+        session_id = record.interview.session_id
+        interview_id = record.interview.interview_id
+        delay = (when - self._now()).total_seconds()
+
+        def check() -> None:
+            try:
+                with self._record(session_id, interview_id):
+                    pass  # _record applies the deadline and the finalization drain
+            except InterviewError:
+                pass
+
+        self._scheduler(delay, check)
+
+    def _time_is_up(self, record: _InterviewRecord, buffer_seconds: float = 0) -> bool:
+        return record.deadline_at is not None and self._now() >= record.deadline_at - timedelta(
+            seconds=buffer_seconds
+        )
 
     def _advance_clock(self, record: _InterviewRecord) -> None:
         """Enforce the deadline and finish draining whenever the interview is touched."""
@@ -709,6 +775,7 @@ class InterviewFlowService:
         interview.end_reason = reason  # type: ignore[assignment]
         interview.ended_at = self._now()
         record.drain_until = interview.ended_at + timedelta(seconds=FINALIZE_DRAIN_SECONDS)
+        self._schedule_check(record, record.drain_until)
         self._maybe_complete(record)
 
     def _maybe_complete(self, record: _InterviewRecord) -> None:

@@ -31,7 +31,7 @@ from app.providers.base import (
     AgentModelProvider,
     ProviderError,
 )
-from app.providers.openai_interview_planner import OpenAIQuestionPlanner
+from app.providers.openai_interview_planner import OpenAIQuestionPlanner, interview_model
 from app.providers.openai_provider import OpenAIEmbeddingProvider, OpenAIModelProvider
 from app.providers.unavailable import MissingOpenAIProvider
 from app.services.agent import AgentService, AgentStepLimitError
@@ -173,7 +173,7 @@ def build_default_services(settings: Settings | None = None) -> ApplicationServi
             api_key=selected.openai_api_key,
         )
         question_planner: QuestionPlanner = OpenAIQuestionPlanner(
-            model=selected.openai_model,
+            model=interview_model(selected.openai_model),
             api_key=selected.openai_api_key,
         )
     else:

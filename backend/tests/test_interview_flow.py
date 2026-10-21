@@ -32,9 +32,9 @@ from app.domain.workflow import SessionWorkflow
 from app.main import ApplicationServices, create_app
 from app.providers.base import ProviderTurn
 from app.providers.fake import ScriptedProvider
-from app.providers.openai_interview_planner import OpenAIQuestionPlanner
+from app.providers.openai_interview_planner import OpenAIQuestionPlanner, interview_model
 from app.services.cv import CVService
-from app.services.interview_flow import InterviewFlowService
+from app.services.interview_flow import InterviewFlowService, follow_up_problem
 from app.services.question_planner import (
     TemplateQuestionPlanner,
     job_requirements,
@@ -89,6 +89,21 @@ class EchoProvider:
         return []
 
 
+class FakeScheduler:
+    def __init__(self) -> None:
+        self.delays: list[float] = []
+        self.callbacks: list[Any] = []
+
+    def __call__(self, delay: float, callback: Any) -> None:
+        self.delays.append(round(delay, 3))
+        self.callbacks.append(callback)
+
+    def run_all(self) -> None:
+        callbacks, self.callbacks = self.callbacks, []
+        for callback in callbacks:
+            callback()
+
+
 class Clock:
     def __init__(self) -> None:
         self.now = datetime(2026, 10, 21, 9, 0, tzinfo=UTC)
@@ -121,7 +136,7 @@ PASTED_JOB = {
 
 
 def build(
-    planner: Any = None, clock: Clock | None = None
+    planner: Any = None, clock: Clock | None = None, scheduler: Any = None
 ) -> tuple[TestClient, ApplicationServices]:
     workflow = SessionWorkflow()
     jobs = JobRepository.load(JobRepository.default_data_path())
@@ -134,10 +149,13 @@ def build(
         agent_provider=ScriptedProvider([ProviderTurn(message="ok")]),
         question_planner=planner,
     )
-    if clock is not None:
-        services.interviews = InterviewFlowService(
-            workflow, jobs, planner or TemplateQuestionPlanner(), clock=clock
-        )
+    services.interviews = InterviewFlowService(
+        workflow,
+        jobs,
+        planner or TemplateQuestionPlanner(),
+        clock=clock,
+        scheduler=scheduler or FakeScheduler(),
+    )
     return TestClient(create_app(services)), services
 
 
@@ -788,7 +806,7 @@ def test_server_enforces_the_time_limit() -> None:
     assert step.json()["action"] == "finish" and step.json()["reason"] == "time_limit"
 
 
-def test_time_limit_reached_during_next_step_finishes() -> None:
+def test_no_new_question_in_the_last_30_seconds() -> None:
     clock = Clock()
     client, _ = build(clock=clock)
     base = ready_session(client)
@@ -797,12 +815,37 @@ def test_time_limit_reached_during_next_step_finishes() -> None:
     q1 = started["next_step"]["question"]
     writer = TurnWriter(client, base, interview["interview_id"])
     answer = writer.answer(q1, "Answer.")
-    clock.advance(minutes=4, seconds=59)
+    clock.advance(minutes=4, seconds=20)
     step = next_step(client, base, interview["interview_id"], 1, q1["question_id"], [answer])
     assert step.json()["action"] == "ask_question"
-    clock.advance(seconds=2)
+    q2 = step.json()["question"]
+    answer = writer.answer(q2, "Second answer.")
+    clock.advance(seconds=15)  # 25 seconds left: too little for another question
+    step = next_step(client, base, interview["interview_id"], 2, q2["question_id"], [answer])
+    assert step.json() == {"action": "finish", "reason": "time_limit", "flow_revision": 3}
     state = client.get(f"{base}/interviews/{interview['interview_id']}").json()
-    assert state["end_reason"] == "time_limit"
+    assert state["end_reason"] == "time_limit" and state["phase"] == "completed"
+
+
+def test_deadline_task_finishes_an_idle_interview_without_any_request() -> None:
+    clock = Clock()
+    scheduler = FakeScheduler()
+    client, services = build(clock=clock, scheduler=scheduler)
+    base = ready_session(client)
+    interview = make_interview(client, base, config={"duration_minutes": 5})
+    started = start(client, base, interview)
+    q1 = started["next_step"]["question"]
+    writer = TurnWriter(client, base, interview["interview_id"])
+    writer.answer(q1, "Answer given, then the candidate goes quiet.")
+    assert scheduler.delays == [300.0]
+
+    clock.advance(minutes=5)
+    scheduler.run_all()  # the timer fires; no HTTP request is made
+    session_id = base.rsplit("/", 1)[1]
+    record = services.interviews._records[interview["interview_id"]]
+    assert record.interview.phase == "completed"
+    assert record.interview.end_reason == "time_limit"
+    assert services.interviews.submitted_turn_ids(session_id, interview["interview_id"])
 
 
 def test_finalization_drains_pending_transcripts_then_marks_them_failed() -> None:
@@ -922,3 +965,66 @@ def test_candidate_and_interviewer_delivery_rules_are_validated() -> None:
                         timing={"clock_id": "a", "start_ms": 10, "end_ms": 5,
                                 "source": "provider_vad"})
     assert client.post(writer.url, json=body).status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Follow-up policy and planner configuration
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("text", "problem"),
+    [
+        ("How did you test the input validation?", None),
+        ("What would you change if you built it again?", None),
+        ("How would you avoid a race condition in that API?", None),
+        ("How would you protect health data in this pipeline?", None),
+        ("How do you find all children of a node in a tree?", None),
+        ("What did your project partner work on?", None),
+        ("How old are you?", "sensitive_topic"),
+        ("Do you need a visa to work here?", "sensitive_topic"),
+        ("Are you married or planning to have children?", "sensitive_topic"),
+        ("Tell me more about that.", "not_a_question"),
+        ("Why?", "not_a_question"),
+        ("Why " + "really " * 80 + "?", "too_long"),
+    ],
+)
+def test_follow_up_policy(text: str, problem: str | None) -> None:
+    assert follow_up_problem(text) == problem
+
+
+def test_rejected_follow_up_moves_to_the_next_main_question() -> None:
+    client, _ = build()
+    base = ready_session(client)
+    interview = make_interview(client, base)
+    started = start(client, base, interview)
+    q1 = started["next_step"]["question"]
+    writer = TurnWriter(client, base, interview["interview_id"])
+    answer = writer.answer(q1, "I worked on a team project.")
+    step = next_step(
+        client, base, interview["interview_id"], 1, q1["question_id"], [answer],
+        {"text": "Where were you born?", "rationale": "Personal."},
+    ).json()
+    assert step["action"] == "ask_question"
+    assert step["question"]["kind"] == "main"
+    state = client.get(f"{base}/interviews/{interview['interview_id']}").json()
+    assert all("born" not in q["text"] for q in state["questions"])
+
+
+def test_question_plan_schema_is_valid_for_strict_structured_outputs() -> None:
+    from openai.lib._parsing._responses import type_to_text_format_param
+
+    param = type_to_text_format_param(QuestionPlanProposal)
+    assert param["type"] == "json_schema" and param["strict"] is True
+    schema = param["schema"]
+    objects = [schema, *schema.get("$defs", {}).values()]
+    for item in objects:
+        assert item["additionalProperties"] is False
+        assert sorted(item["required"]) == sorted(item["properties"])
+
+
+def test_interview_model_can_be_configured_separately(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_INTERVIEW_MODEL", raising=False)
+    assert interview_model("text-model") == "text-model"
+    monkeypatch.setenv("OPENAI_INTERVIEW_MODEL", " other-model ")
+    assert interview_model("text-model") == "other-model"
