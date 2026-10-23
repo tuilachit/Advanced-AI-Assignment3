@@ -1,5 +1,9 @@
 # UI integration readiness — 23 October 2026
 
+This records the review before commit `51eb2bf`. Subsequent UI lifecycle changes
+and the current voice handoff are documented in
+[voice-ui-preparation.md](voice-ui-preparation.md).
+
 ## Review outcome and scope
 
 The current work stays within Mio's UI & Integration responsibilities. The

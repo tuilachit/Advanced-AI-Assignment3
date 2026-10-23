@@ -1,5 +1,8 @@
 # Assignment 3: Interview UI integration
 
+The next checkpoint prepares the UI for real voice without enabling audio:
+[Real Voice Integration preparation](voice-ui-preparation.md).
+
 For the current review across all three phases, see
 [integration readiness](integration-readiness.md) and the
 [proposed Draft PR](ui-draft-pr.md). The checkpoints below retain their original

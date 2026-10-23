@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { preparedInterview } from '../../../test/interviewFixtures'
-import type { TranscriptTurn } from '../../../types'
+import type { Interview, TranscriptTurn } from '../../../types'
 import { LiveInterviewStage } from './LiveInterviewStage'
 import { initialLiveState, liveReducer } from './liveState'
 import type { VoiceController, VoiceIntegration, VoiceNotification } from './voiceBridge'
@@ -12,6 +12,12 @@ function ready() { return preparedInterview({ request_id: 'test-live', job: { so
 function turn(patch: Partial<TranscriptTurn> = {}): TranscriptTurn {
   return { turn_id: 'answer-1', question_id: 'question-0', speaker: 'candidate', input_mode: 'live_voice',
     transcript_version: 1, transcript_status: 'partial', text: 'I built', delivery_status: 'not_applicable', timing: null, ...patch }
+}
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason: Error) => void
+  const promise = new Promise<T>((done, fail) => { resolve = done; reject = fail })
+  return { promise, resolve, reject }
 }
 function harness() {
   const holder = { interview: ready() }
@@ -255,5 +261,154 @@ describe('live interview UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View feedback' }))
     expect(onFeedback).toHaveBeenCalledWith(expect.objectContaining({ phase: 'completed', interview_id: completed.interview_id }))
     expect(h.controller.disconnect).toHaveBeenCalled()
+  })
+
+  it('releases pending controls on pagehide and refreshes on pageshow without reconnecting', async () => {
+    const h = harness()
+    const connection = deferred<void>()
+    h.controller.connect.mockReturnValueOnce(connection.promise)
+    render(<LiveInterviewStage interview={ready()} integration={h.integration} onClose={vi.fn()} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start interview' })).toBeEnabled())
+    fireEvent.click(screen.getByRole('button', { name: 'Start interview' }))
+    expect(screen.getByText('Microphone access requested · connecting')).toBeVisible()
+    act(() => window.dispatchEvent(new Event('pagehide')))
+    expect(h.controller.disconnect).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Start interview' })).toBeEnabled()
+    const reads = h.read.mock.calls.length
+    act(() => window.dispatchEvent(new Event('pageshow')))
+    await waitFor(() => expect(h.read.mock.calls.length).toBeGreaterThan(reads))
+    await act(async () => connection.reject(new Error('Cancelled permission request')))
+    expect(h.controller.connect).toHaveBeenCalledTimes(1)
+    expect(h.controller.finish).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('does not let an old connect rejection fail a replacement controller connection', async () => {
+    const old = harness()
+    const next = harness()
+    const oldConnection = deferred<void>()
+    const nextConnection = deferred<void>()
+    old.controller.connect.mockReturnValueOnce(oldConnection.promise)
+    next.controller.connect.mockReturnValueOnce(nextConnection.promise)
+    const props = { interview: ready(), onClose: vi.fn() }
+    const view = render(<LiveInterviewStage {...props} integration={old.integration} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start interview' })).toBeEnabled())
+    fireEvent.click(screen.getByRole('button', { name: 'Start interview' }))
+    view.rerender(<LiveInterviewStage {...props} integration={next.integration} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start interview' })).toBeEnabled())
+    fireEvent.click(screen.getByRole('button', { name: 'Start interview' }))
+    await act(async () => oldConnection.reject(new Error('Old connection cancelled')))
+    expect(screen.getByText('Connecting', { exact: true })).toBeVisible()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    await act(async () => { next.activate(); nextConnection.resolve() })
+    expect(screen.getByRole('button', { name: 'Mute microphone' })).toBeEnabled()
+    expect(old.listeners.size).toBe(0)
+  })
+
+  it('requires a new attachment when the controller is replaced during an active interview', async () => {
+    const old = harness()
+    const next = harness()
+    const props = { interview: ready(), onClose: vi.fn() }
+    const view = render(<LiveInterviewStage {...props} integration={old.integration} />)
+    await start()
+    next.holder.interview = structuredClone(old.holder.interview)
+    view.rerender(<LiveInterviewStage {...props} integration={next.integration} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Reconnect voice' })).toBeEnabled())
+    expect(screen.getByRole('button', { name: 'End interview' })).toBeDisabled()
+    expect(next.controller.connect).not.toHaveBeenCalled()
+    expect(old.controller.disconnect).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores an old finish result after replacing the controller', async () => {
+    const old = harness()
+    const next = harness()
+    const finishing = deferred<Interview>()
+    old.controller.finish.mockReturnValueOnce(finishing.promise)
+    const props = { interview: ready(), onClose: vi.fn(), onFeedback: vi.fn() }
+    const view = render(<LiveInterviewStage {...props} integration={old.integration} />)
+    await start()
+    fireEvent.click(screen.getByRole('button', { name: 'End interview' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Finish interview' }))
+    next.holder.interview = structuredClone(old.holder.interview)
+    view.rerender(<LiveInterviewStage {...props} integration={next.integration} />)
+    await act(async () => finishing.resolve({ ...old.holder.interview, phase: 'completed', flow_revision: 3 }))
+    expect(screen.queryByRole('button', { name: 'View feedback' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Interview complete', { exact: true })).not.toBeInTheDocument()
+  })
+
+  it('recovers a controller API warning when a status read succeeds without clearing playback errors', async () => {
+    vi.useFakeTimers()
+    const h = harness()
+    h.activate()
+    render(<LiveInterviewStage interview={h.holder.interview} integration={h.integration} onClose={vi.fn()} />)
+    await act(async () => {})
+    act(() => {
+      h.emit({ type: 'connection', status: 'connected' })
+      h.emit({ type: 'error', code: 'api_unreachable', message: 'Check FastAPI before continuing.', retryable: true })
+    })
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Listening' })).toBeVisible()
+    act(() => h.emit({ type: 'error', code: 'audio_playback_blocked', message: 'Enable playback.', retryable: true }))
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(screen.getByRole('button', { name: 'Enable audio' })).toBeVisible()
+  })
+
+  it('keeps the voice controller connected while polling finalization, then hands off the canonical transcript', async () => {
+    vi.useFakeTimers()
+    const h = harness()
+    h.activate()
+    const onFeedback = vi.fn()
+    render(<LiveInterviewStage interview={h.holder.interview} integration={h.integration} onClose={vi.fn()} onFeedback={onFeedback} />)
+    await act(async () => {})
+    act(() => {
+      h.emit({ type: 'connection', status: 'connected' })
+      h.emit({ type: 'transcript', turn: turn({ text: 'Unconfirmed live caption' }) })
+    })
+    h.holder.interview = { ...h.holder.interview, phase: 'finalizing', flow_revision: 2 }
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(screen.getByText(/Finishing the transcript/)).toBeVisible()
+    expect(h.controller.disconnect).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'View feedback' })).not.toBeInTheDocument()
+    const final = turn({ turn_id: 'saved-answer', text: 'Persisted final answer.', transcript_status: 'final' })
+    h.holder.interview = { ...h.holder.interview, phase: 'completed', flow_revision: 3, transcript_revision: 4, turns: [final] }
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(h.controller.disconnect).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Unconfirmed live caption')).not.toBeInTheDocument()
+    act(() => h.emit({ type: 'transcript', turn: turn({ text: 'Late caption after completion' }) }))
+    fireEvent.click(screen.getByRole('button', { name: 'View feedback' }))
+    expect(onFeedback).toHaveBeenCalledWith(h.holder.interview)
+    expect(h.controller.finish).not.toHaveBeenCalled()
+  })
+
+  it('ignores late reads and unsubscribed notifications after unmount', async () => {
+    const h = harness()
+    const pendingRead = deferred<Interview>()
+    h.read.mockReturnValueOnce(pendingRead.promise)
+    const view = render(<LiveInterviewStage interview={ready()} integration={h.integration} onClose={vi.fn()} />)
+    const staleListener = h.controller.subscribe.mock.calls[0][0]
+    view.unmount()
+    const disconnects = h.controller.disconnect.mock.calls.length
+    await act(async () => {
+      pendingRead.resolve({ ...ready(), phase: 'completed' })
+      staleListener({ type: 'connection', status: 'connected' })
+    })
+    expect(h.listeners.size).toBe(0)
+    expect(h.controller.disconnect).toHaveBeenCalledTimes(disconnects)
+    expect(h.controller.connect).not.toHaveBeenCalled()
+  })
+
+  it('does not surface an earlier GET failure after a completion event in the same batch', async () => {
+    const h = harness()
+    h.activate()
+    const pendingRead = deferred<Interview>()
+    h.read.mockReturnValueOnce(pendingRead.promise)
+    render(<LiveInterviewStage interview={h.holder.interview} integration={h.integration} onClose={vi.fn()} onFeedback={vi.fn()} />)
+    await act(async () => {
+      h.emit({ type: 'finished', interview: { ...h.holder.interview, phase: 'completed', flow_revision: 2 } })
+      pendingRead.reject(new Error('Earlier status request failed'))
+    })
+    expect(screen.getByRole('button', { name: 'View feedback' })).toBeEnabled()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })

@@ -64,6 +64,23 @@ test('preview recovers from connection loss and blocked playback without discard
   expect(calls.apiCalls).toEqual([])
 })
 
+test('cancelling a preview connection keeps simulation labels and requires an explicit restart', async ({ page }) => {
+  const calls = await preview(page)
+  await page.getByRole('button', { name: 'Start interview', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Connecting…' })).toBeDisabled()
+  await expect(page.getByText('Microphone off · simulated', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Disconnect voice', exact: true }).click()
+  await expect(page.getByText('Simulated · Disconnected', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Start interview', exact: true })).toBeEnabled()
+  await expect(page.getByText('UI preview · simulated interview')).toBeVisible()
+  await expect(page.getByText('Start your interview to hear the first question.')).toBeVisible()
+  await page.getByRole('button', { name: 'Start interview', exact: true }).click()
+  await expect(page.getByText('Simulated · Connected', { exact: true })).toBeVisible()
+  await expect(page.getByText('Microphone off · simulated', { exact: true })).toBeVisible()
+  expect(calls.errors).toEqual([])
+  expect(calls.apiCalls).toEqual([])
+})
+
 test('preview confirms finish, waits for finalization and offers feedback', async ({ page }) => {
   const calls = await preview(page)
   await page.getByRole('button', { name: 'Start interview' }).click()

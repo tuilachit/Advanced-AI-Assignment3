@@ -23,6 +23,10 @@ export interface VoiceController {
   disconnect(): void
 }
 
+// Keep this small port until PR #2 is integrated, then derive it from Luke's
+// VoiceEvent / public controller methods. No dynamic imports, alternate voice
+// implementation or simulated fallback belongs in the application's binding.
+
 export type VisualizerState = 'ready' | 'connecting' | 'listening' | 'speaking' |
   'user-speaking' | 'muted' | 'error' | 'finalizing' | 'finished'
 

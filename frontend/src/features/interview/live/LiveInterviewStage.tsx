@@ -44,7 +44,9 @@ export function LiveInterviewStage({ interview: initial, visible = true, integra
   const [label, hint] = visualizerCopy[state]
   const Visualizer = integration.Visualizer ?? InterviewerVisualizer
   const connectionLabel = { disconnected: 'Disconnected', connecting: 'Connecting', connected: 'Connected', failed: 'Connection lost' }[connection]
-  const microphoneLabel = preview ? 'Microphone off · simulated' : connected ? activity.muted ? 'Microphone muted' : 'Microphone on' : 'Microphone off'
+  const microphoneLabel = preview ? 'Microphone off · simulated'
+    : connection === 'connecting' ? 'Microphone access requested · connecting'
+      : connected ? activity.muted ? 'Microphone muted' : 'Microphone on' : 'Microphone off'
 
   return <section className="stage-panel live-interview" aria-labelledby="live-interview-title">
     {preview ? <div className="live-preview-label" role="note"><strong>UI preview · simulated interview</strong>
