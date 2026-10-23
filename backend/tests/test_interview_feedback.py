@@ -27,6 +27,9 @@ from app.providers.interview_feedback import (
     OpenAIInterviewFeedbackProvider,
     QuestionAssessmentInput,
 )
+from app.services.feedback_metrics import calculate_speaking_metrics
+from app.services.interview_feedback import InterviewFeedbackService
+from app.services.interview_flow import InterviewConflictError, InterviewNotFoundError
 
 
 def criterion(**changes):
@@ -572,3 +575,200 @@ def test_feedback_projections_frozen_slotted_and_empty_answers_valid():
         with pytest.raises(FrozenInstanceError):
             setattr(obj, next(iter(obj.__dataclass_fields__)), None)
     assert QuestionAssessmentInput("q", "Asked question", "technical").answers == ()
+
+
+# Stage 4A exercises the canonical flow, models and copies with no SDK/network.
+class UncalledFeedbackProvider:
+    def assess(self, assessment_input):
+        raise AssertionError("Stage 4A must not call the provider")
+
+
+@pytest.fixture
+def preparation_fixture():
+    from test_interview_flow import (
+        TurnWriter,
+        build,
+        make_interview,
+        ready_session,
+        start,
+    )
+
+    client, services = build()
+    base = ready_session(client)
+    interview = make_interview(client, base)
+    question = start(client, base, interview)["next_step"]["question"]
+    writer = TurnWriter(client, base, interview["interview_id"])
+    # No interviewer transcript: canonical status still establishes an asked question.
+    answer = writer.send(question["question_id"], "candidate", "  Um I built it.  ")
+    flow = services.interviews
+    session_id = base.rsplit("/", 1)[1]
+    service = InterviewFeedbackService(flow, UncalledFeedbackProvider())
+    return service, flow, client, base, interview, question, answer, session_id
+
+
+def finish_preparation(fixture):
+    service, flow, client, base, interview, _, _, session_id = fixture
+    interview_id = interview["interview_id"]
+    state = flow.get(session_id, interview_id)
+    response = client.post(
+        f"{base}/interviews/{interview_id}/end",
+        json={"request_id": "finish", "expected_flow_revision": state.flow_revision},
+    )
+    assert response.status_code == 200
+    state = flow.get(session_id, interview_id)
+    return service.prepare(
+        session_id, interview_id,
+        FeedbackRequest(
+            request_id="feedback", expected_transcript_revision=state.transcript_revision,
+        ),
+    )
+
+
+def test_prepare_projects_final_submitted_answers_and_canonical_metrics(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    question = preparation_fixture[5]
+    assert [q.question_id for q in prepared.asked_questions] == [question["question_id"]]
+    assert prepared.assessment_input.questions == prepared.asked_questions
+    assert prepared.assessment_input.questions[0].answers[0].text == "  Um I built it.  "
+    assert prepared.assessment_input.context.job_title == prepared.context.job.title
+    assert any("Python" in text for text in prepared.assessment_input.context.candidate_context)
+    # Real TranscriptTurn/TranscriptTiming satisfy Stage 2 directly, without adaptation.
+    metrics = calculate_speaking_metrics(prepared.answer_turns, question_id=question["question_id"])
+    assert metrics[0].value == 80
+    assert metrics[1].value == 1
+    assert prepared.interview.feedback_status == "not_requested"
+
+
+def test_prepare_returns_isolated_copies(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    prepared.interview.turns[0].text = "mutated"
+    prepared.context.job.title = "mutated"
+    _, flow, _, _, interview, _, _, session_id = preparation_fixture
+    assert flow.get(session_id, interview["interview_id"]).turns[0].text == "  Um I built it.  "
+    assert flow.get_context(session_id, interview["interview_id"]).job.title != "mutated"
+    assert prepared.assessment_input.questions[0].answers[0].text == "  Um I built it.  "
+
+
+@pytest.mark.parametrize("phase", ["ready", "active", "finalizing", "cancelled", "failed"])
+def test_prepare_rejects_noncompleted_phases(preparation_fixture, monkeypatch, phase):
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    original = flow.get(session_id, interview["interview_id"])
+    monkeypatch.setattr(flow, "get", lambda *args: original.model_copy(update={"phase": phase}))
+    with pytest.raises(InterviewConflictError, match="completed"):
+        service.prepare(session_id, interview["interview_id"], FeedbackRequest(
+            request_id="feedback", expected_transcript_revision=original.transcript_revision,
+        ))
+
+
+def test_prepare_rejects_foreign_unknown_and_stale_revision(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    service, _, _, _, interview, _, _, session_id = preparation_fixture
+    for parent, child in [("foreign", interview["interview_id"]), (session_id, "missing")]:
+        with pytest.raises(InterviewNotFoundError):
+            service.prepare(parent, child, prepared.request)
+    with pytest.raises(InterviewConflictError) as caught:
+        service.prepare(session_id, interview["interview_id"], prepared.request.model_copy(
+            update={"expected_transcript_revision": 999},
+        ))
+    assert caught.value.code == "transcript_revision_conflict"
+    with pytest.raises(ValidationError):
+        service.prepare(session_id, interview["interview_id"], prepared.request.model_copy(
+            update={"request_id": " "},
+        ))
+
+
+@pytest.mark.parametrize("change", ["revision", "submitted", "question"])
+def test_prepare_detects_changes_between_reads(preparation_fixture, monkeypatch, change):
+    prepared = finish_preparation(preparation_fixture)
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    if change == "submitted":
+        values = iter([set(prepared.submitted_turn_ids), set()])
+        monkeypatch.setattr(flow, "submitted_turn_ids", lambda *args: next(values))
+    else:
+        changed = prepared.interview.model_copy(deep=True)
+        if change == "revision":
+            changed.transcript_revision += 1
+        else:
+            changed.questions[0].text = "Changed question?"
+        values = iter([prepared.interview, changed])
+        monkeypatch.setattr(flow, "get", lambda *args: next(values))
+    with pytest.raises(InterviewConflictError) as caught:
+        service.prepare(session_id, interview["interview_id"], prepared.request)
+    assert caught.value.code == "feedback_snapshot_conflict"
+
+
+@pytest.mark.parametrize("status", ["skipped", "issued", "answered"])
+def test_prepare_retains_unassessable_asked_questions(preparation_fixture, monkeypatch, status):
+    prepared = finish_preparation(preparation_fixture)
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    state = prepared.interview.model_copy(deep=True)
+    state.questions[0].status = status
+    monkeypatch.setattr(flow, "get", lambda *args: state.model_copy(deep=True))
+    monkeypatch.setattr(flow, "submitted_turn_ids", lambda *args: set())
+    result = service.prepare(session_id, interview["interview_id"], prepared.request)
+    assert len(result.asked_questions) == 1
+    assert result.asked_questions[0].answers == ()
+    assert result.assessment_input.questions == ()
+    assert result.answer_turns == ()
+
+
+@pytest.mark.parametrize("change", ["partial", "failed", "blank", "foreign", "interviewer"])
+def test_prepare_excludes_unusable_submitted_turns(preparation_fixture, monkeypatch, change):
+    prepared = finish_preparation(preparation_fixture)
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    state = prepared.interview.model_copy(deep=True)
+    turn = state.turns[0]
+    if change in {"partial", "failed"}:
+        turn.transcript_status = change
+    elif change == "blank":
+        turn.text = " "
+    elif change == "foreign":
+        turn.question_id = "another-question"
+    else:
+        turn.speaker = "interviewer"
+        turn.delivery_status = "complete"
+    monkeypatch.setattr(flow, "get", lambda *args: state.model_copy(deep=True))
+    result = service.prepare(session_id, interview["interview_id"], prepared.request)
+    assert result.asked_questions[0].answers == ()
+    assert result.assessment_input.questions == ()
+
+
+def test_prepare_keeps_followup_order_and_excludes_unsubmitted_finals(
+    preparation_fixture, monkeypatch,
+):
+    prepared = finish_preparation(preparation_fixture)
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    state = prepared.interview.model_copy(deep=True)
+    followup = state.questions[0].model_copy(update={
+        "question_id": "followup", "kind": "follow_up",
+        "parent_question_id": state.questions[0].question_id,
+    })
+    state.questions.insert(1, followup)
+    extra = state.turns[0].model_copy(update={"turn_id": "unsubmitted", "text": "Exclude me"})
+    second = state.turns[0].model_copy(update={
+        "turn_id": "second", "question_id": "followup", "text": "Followup answer",
+    })
+    state.turns.extend([extra, second])
+    monkeypatch.setattr(flow, "get", lambda *args: state.model_copy(deep=True))
+    monkeypatch.setattr(flow, "submitted_turn_ids", lambda *args: {
+        *prepared.submitted_turn_ids, "second",
+    })
+    result = service.prepare(session_id, interview["interview_id"], prepared.request)
+    assert [q.question_id for q in result.asked_questions] == [
+        state.questions[0].question_id, "followup",
+    ]
+    assert [t.turn_id for t in result.answer_turns] == [state.turns[0].turn_id, "second"]
+    assert result.assessment_input.questions[1].category == followup.category
+
+
+def test_prepare_skipped_question_never_supplies_evidence_even_if_submitted(
+    preparation_fixture, monkeypatch,
+):
+    prepared = finish_preparation(preparation_fixture)
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    state = prepared.interview.model_copy(deep=True)
+    state.questions[0].status = "skipped"
+    monkeypatch.setattr(flow, "get", lambda *args: state.model_copy(deep=True))
+    result = service.prepare(session_id, interview["interview_id"], prepared.request)
+    assert result.asked_questions[0].answers == ()
+    assert result.assessment_input.questions == ()
