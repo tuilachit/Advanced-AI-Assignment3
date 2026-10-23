@@ -11,6 +11,7 @@ interface CVStageProps {
   onSave: (cv: CVDocument) => Promise<void>
   onValidate: (cvId: string) => Promise<void>
   onRecordExport: (cvId: string) => Promise<void>
+  onPrepareInterview?: () => void
 }
 
 export function CVStage({
@@ -20,6 +21,7 @@ export function CVStage({
   onSave,
   onValidate,
   onRecordExport,
+  onPrepareInterview,
 }: CVStageProps) {
   const [draft, setDraft] = useState<CVDocument | null>(session.cv)
 
@@ -169,6 +171,15 @@ export function CVStage({
               {unsaved ? <small>Save your current edits first.</small> : null}
             </div>
           )}
+          {exportReady && onPrepareInterview ? (
+            <div className="interview-handoff">
+              <h3>Take your experience into the conversation</h3>
+              <p>Prepare a practice interview with this validated CV and your target role.</p>
+              <button className="secondary-button" type="button" disabled={busy} onClick={onPrepareInterview}>
+                Practise interview
+              </button>
+            </div>
+          ) : null}
         </aside>
       </div>
     </section>

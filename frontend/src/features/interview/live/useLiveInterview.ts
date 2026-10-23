@@ -1,0 +1,130 @@
+import { useEffect, useReducer, useRef, useState } from 'react'
+
+import { ApiError } from '../../../api'
+import type { Interview } from '../../../types'
+import { initialLiveState, isTerminal, liveReducer } from './liveState'
+import type { VoiceController, VoiceIntegration } from './voiceBridge'
+
+export function useLiveInterview(initial: Interview, integration: VoiceIntegration, visible: boolean) {
+  const [state, dispatch] = useReducer(liveReducer, initial, initialLiveState)
+  const [controller, setController] = useState<VoiceController | null>(null)
+  const [checking, setChecking] = useState(true)
+  const [apiError, setApiError] = useState<string | null>(null)
+  const [pending, setPending] = useState<string | null>(null)
+  const [attached, setAttached] = useState(false)
+  const current = useRef(state)
+  current.current = state
+  const command = useRef(0)
+  const locked = useRef(false)
+  const refreshRef = useRef<() => Promise<void>>(async () => {})
+
+  useEffect(() => {
+    const voice = integration.createController(initial.session_id)
+    setController(voice)
+    let disposed = false
+    let reading = false
+    async function refresh() {
+      if (disposed || reading) return
+      reading = true
+      try {
+        const interview = await integration.readInterview(initial.session_id, initial.interview_id)
+        if (!disposed) {
+          dispatch({ type: 'snapshot', interview })
+          setApiError(null)
+          if (isTerminal(interview)) voice?.disconnect()
+        }
+      } catch (error) {
+        if (!disposed) setApiError(error instanceof ApiError && ['interview_not_found', 'session_not_found'].includes(error.code)
+          ? 'This temporary interview is no longer available. Return to setup to prepare another.'
+          : 'The local API could not be reached. Displayed progress may be out of date. Retry the connection.')
+      } finally {
+        reading = false
+        if (!disposed) setChecking(false)
+      }
+    }
+    refreshRef.current = refresh
+    const unsubscribe = voice?.subscribe((event) => {
+      if (disposed) return
+      dispatch(event)
+      if (event.type === 'question' || (event.type === 'connection' && event.status === 'connected')) void refresh()
+    })
+    void refresh()
+    const poll = window.setInterval(() => {
+      const latest = current.current
+      if (['active', 'finalizing'].includes(latest.interview.phase) ||
+        ['connecting', 'connected'].includes(latest.connection)) void refresh()
+    }, 2000)
+    const onPageHide = () => voice?.disconnect()
+    window.addEventListener('pagehide', onPageHide)
+    return () => {
+      disposed = true
+      command.current++
+      locked.current = false
+      refreshRef.current = async () => {}
+      window.clearInterval(poll)
+      window.removeEventListener('pagehide', onPageHide)
+      unsubscribe?.()
+      voice?.disconnect()
+    }
+  }, [initial.session_id, initial.interview_id, integration])
+
+  function disconnect() {
+    command.current++
+    locked.current = false
+    setPending(null)
+    controller?.disconnect()
+    dispatch({ type: 'connection', status: 'disconnected' })
+  }
+
+  // The app keeps setup mounted when navigating away. Release audio even then;
+  // disconnect never claims the interview ended, and its server timer continues.
+  useEffect(() => {
+    if (!visible) {
+      command.current++
+      locked.current = false
+      setPending(null)
+      controller?.disconnect()
+      dispatch({ type: 'connection', status: 'disconnected' })
+    }
+  }, [visible, controller])
+
+  async function run(name: string, action: (voice: VoiceController) => Promise<void>) {
+    if (!controller || locked.current || !visible || isTerminal(current.current.interview)) return
+    locked.current = true
+    const identity = ++command.current
+    setPending(name)
+    dispatch({ type: 'clear-error' })
+    try {
+      await action(controller)
+      if (identity === command.current) await refreshRef.current()
+    } catch {
+      if (identity === command.current) dispatch({ type: 'command-error',
+        message: 'That action could not be completed. Your transcript is kept here; check the connection and try again.' })
+    } finally {
+      if (identity === command.current) { locked.current = false; setPending(null) }
+    }
+  }
+
+  return {
+    state, controller, checking, apiError, pending, attached,
+    refresh: () => refreshRef.current(), disconnect,
+    connect: () => run('connect', async (voice) => {
+      // Luke's connect() selects the interview before requesting a microphone.
+      // A fresh controller has no selected interview, even for an active record.
+      setAttached(true)
+      dispatch({ type: 'connection', status: 'connecting' })
+      try { await voice.connect(initial.interview_id) }
+      catch (error) {
+        if (current.current.connection === 'connecting') dispatch({ type: 'connection', status: 'failed' })
+        throw error
+      }
+    }),
+    skip: () => run('skip', (voice) => voice.skip()),
+    finish: () => run('finish', async (voice) => { dispatch({ type: 'snapshot', interview: await voice.finish() }) }),
+    resumeAudio: () => run('audio', (voice) => voice.resume_audio()),
+    toggleMute: () => {
+      if (!controller || state.connection !== 'connected') return
+      controller.set_muted(!state.activity.muted)
+    },
+  }
+}

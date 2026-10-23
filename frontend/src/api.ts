@@ -2,7 +2,9 @@ import type {
   ApiErrorBody,
   CVDocument,
   CVGenerationResponse,
+  CreateInterviewRequest,
   FactInput,
+  Interview,
   MessageResponse,
   ResumeEntryEdit,
   Session,
@@ -36,6 +38,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getInterview: (sessionId: string, interviewId: string) =>
+    request<Interview>('/sessions/' + encodeURIComponent(sessionId) + '/interviews/' + encodeURIComponent(interviewId), {
+      cache: 'no-store',
+    }),
+  createInterview: (sessionId: string, body: CreateInterviewRequest) =>
+    request<Interview>('/sessions/' + encodeURIComponent(sessionId) + '/interviews', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   createSession: () => request<Session>('/sessions', { method: 'POST' }),
   getSession: (sessionId: string) => request<Session>(`/sessions/${sessionId}`),
   getTrace: (sessionId: string) =>

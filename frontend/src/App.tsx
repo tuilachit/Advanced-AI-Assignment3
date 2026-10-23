@@ -8,6 +8,7 @@ import { ProfileStage } from './components/ProfileStage'
 import { ResumeEntryStage } from './components/ResumeEntryStage'
 import { WorkspaceHero } from './components/WorkspaceHero'
 import { preferredStage, StageNav, type Stage } from './components/StageNav'
+import { InterviewSetupStage } from './features/interview/InterviewSetupStage'
 import type { ChatMessage, CVDocument, ResumeEntry, ResumeEntryEdit, Session } from './types'
 
 interface WorkflowAppProps {
@@ -55,7 +56,7 @@ export function WorkflowApp(props: WorkflowAppProps) {
 
       <div className="workspace" id="builder">
         <div className="workflow-header">
-          <p className="eyebrow">Your next chapter, in five steps</p>
+          <p className="eyebrow">Your experience. Your next step.</p>
           <StageNav active={activeStage} state={session.state} onChange={setActiveStage} />
         </div>
 
@@ -97,9 +98,21 @@ export function WorkflowApp(props: WorkflowAppProps) {
               onSave={props.onSaveCV}
               onValidate={props.onValidateCV}
               onRecordExport={props.onRecordExport}
+              onPrepareInterview={() => setActiveStage('interview')}
             />
           ) : null}
           {activeStage === 'evidence' ? <EvidenceStage session={session} /> : null}
+          <div hidden={activeStage !== 'interview'}>
+            <InterviewSetupStage
+              key={session.session_id}
+              visible={activeStage === 'interview'}
+              session={session}
+              busy={busy}
+              onReviewProfile={() => setActiveStage('profile')}
+              onReviewEntries={() => setActiveStage('resume')}
+              onReviewJobs={() => setActiveStage('jobs')}
+            />
+          </div>
         </main>
       </div>
       <footer className="workspace-footer">

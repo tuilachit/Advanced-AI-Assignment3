@@ -419,7 +419,7 @@ async function checkResponsiveLayout(page: Page, stage: string) {
   const originalViewport = page.viewportSize()
   for (const width of [1440, 375]) {
     await page.setViewportSize({ width, height: 1000 })
-    await expect(page.locator('.stage-button')).toHaveCount(5)
+    await expect(page.locator('.stage-button')).toHaveCount(6)
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     if (stage !== 'evidence') await expect(page.locator('body')).not.toContainText(/fact-project|message-1|entry-session|graduate_ai_engineer|session-00000001/)
     if (stage === 'cv' && width === 375) {
