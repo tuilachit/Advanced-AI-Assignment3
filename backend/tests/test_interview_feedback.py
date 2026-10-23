@@ -1,6 +1,6 @@
 import json
 from copy import deepcopy
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, datetime, timedelta, timezone
 from types import SimpleNamespace
 
@@ -772,3 +772,289 @@ def test_prepare_skipped_question_never_supplies_evidence_even_if_submitted(
     result = service.prepare(session_id, interview["interview_id"], prepared.request)
     assert result.asked_questions[0].answers == ()
     assert result.assessment_input.questions == ()
+
+
+class AssessmentProvider:
+    def __init__(self, proposal):
+        self.proposal = proposal
+        self.calls = []
+
+    def assess(self, assessment_input):
+        self.calls.append(assessment_input)
+        return self.proposal
+
+
+def full_assessment(prepared):
+    questions = []
+    for question in prepared.assessment_input.questions:
+        criteria = []
+        for name in ["relevance", "specificity", "structure", "technical_reasoning", "star"]:
+            irrelevant = name == (
+                "star" if question.category == "technical" else "technical_reasoning"
+            )
+            criteria.append(criterion(
+                criterion=name,
+                applicability="not_applicable" if irrelevant else "assessed",
+                score=None if irrelevant else 3,
+                evidence=[] if irrelevant else [{
+                    "turn_id": question.answers[0].turn_id, "quote": "I built it",
+                }],
+            ))
+        questions.append(dict(question_id=question.question_id, criteria=criteria))
+    return ModelFeedbackAssessment.model_validate(dict(questions=questions))
+
+
+def test_candidate_context_uses_confirmed_relevant_field_allowlist(
+    preparation_fixture, monkeypatch,
+):
+    prepared = finish_preparation(preparation_fixture)
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    context = prepared.context.model_copy(deep=True)
+    prototype = context.confirmed_facts[0]
+    # Fact.field is intentionally open-ended; unknown contact labels fail closed.
+    private = {
+        "email": "maya@example.test", "phone": "+61 400 123 456",
+        "address": "123 Example Street", "account_id": "account-secret-1",
+        "links": "https://linkedin.com/in/private", "name": "Private Name",
+    }
+    context.confirmed_facts.extend(
+        prototype.model_copy(update={"field": field, "value": value})
+        for field, value in private.items()
+    )
+    context.confirmed_facts.append(prototype.model_copy(update={
+        "field": "technical_skills", "value": "Rust", "status": "confirmed",
+    }))
+    context.confirmed_facts.append(prototype.model_copy(update={
+        "field": "skills", "value": "Unconfirmed secret", "status": "draft",
+    }))
+    context.approved_entries[0].heading.text = "Contact maya@example.test"
+    monkeypatch.setattr(flow, "get_context", lambda *args: context.model_copy(deep=True))
+    result = service.prepare(session_id, interview["interview_id"], prepared.request)
+    provider = AssessmentProvider(full_assessment(result))
+    InterviewFeedbackService(flow, provider).assess(result)
+    sent = provider.calls[0].context.candidate_context
+    text = "\n".join(sent)
+    assert "Python" in text and "Customer Service Assistant" in text and "Rust" in text
+    assert all(value not in text for value in private.values())
+    assert "Unconfirmed secret" not in text
+    assert sent == result.assessment_input.context.candidate_context
+
+
+def test_assess_valid_output_is_detached_and_preserves_inputs(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    before = deepcopy((proposal, prepared))
+    provider = AssessmentProvider(proposal)
+    result = InterviewFeedbackService(preparation_fixture[1], provider).assess(prepared)
+    assert result == proposal and result is not proposal
+    assert result.questions[0].criteria[0] is not proposal.questions[0].criteria[0]
+    assert (proposal, prepared) == before
+    assert provider.calls == [prepared.assessment_input]
+
+
+@pytest.mark.parametrize("status", ["skipped", "issued", "answered"])
+def test_assess_empty_answers_is_local_insufficient_evidence(preparation_fixture, status):
+    prepared = finish_preparation(preparation_fixture)
+    prepared.interview.questions[0].status = status
+    prepared = replace(prepared, assessment_input=replace(prepared.assessment_input, questions=()))
+    result = InterviewFeedbackService(
+        preparation_fixture[1], UncalledFeedbackProvider(),
+    ).assess(prepared)
+    assert len(result.questions) == 1
+    assert len(result.questions[0].criteria) == 5
+    assert all(
+        item.applicability == "insufficient_evidence" and item.score is None
+        and item.evidence == [] and item.explanation
+        for item in result.questions[0].criteria
+    )
+
+
+@pytest.mark.parametrize("failure", ["missing", "extra", "duplicate"])
+def test_assess_exact_question_coverage(preparation_fixture, failure):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    if failure == "missing":
+        proposal.questions.clear()
+    else:
+        extra = proposal.questions[0].model_copy(deep=True)
+        if failure == "extra":
+            extra.question_id = "foreign-question"
+        proposal.questions.append(extra)
+    with pytest.raises(ProviderProtocolError):
+        InterviewFeedbackService(
+            preparation_fixture[1], AssessmentProvider(proposal),
+        ).assess(prepared)
+
+
+@pytest.mark.parametrize("failure", ["missing", "duplicate", "unknown", "bad_score"])
+def test_assess_exact_criterion_coverage(preparation_fixture, failure):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    criteria = proposal.questions[0].criteria
+    if failure == "missing":
+        criteria.pop()
+    elif failure == "duplicate":
+        criteria.append(criteria[0])
+    elif failure == "unknown":
+        criteria[0].criterion = "accent"
+    else:
+        criteria[0].score = 9
+    with pytest.raises(ProviderProtocolError):
+        InterviewFeedbackService(
+            preparation_fixture[1], AssessmentProvider(proposal),
+        ).assess(prepared)
+
+
+@pytest.mark.parametrize("failure", [
+    "foreign", "unsubmitted", "wrong_question", "partial", "interviewer", "modified",
+    "case", "fabricated", "nonassessed_evidence",
+])
+def test_assess_rejects_all_evidence_failures(preparation_fixture, failure):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    evidence = proposal.questions[0].criteria[0].evidence[0]
+    if failure == "foreign":
+        evidence.turn_id = "foreign-turn"
+    elif failure == "unsubmitted":
+        prepared = replace(prepared, submitted_turn_ids=frozenset())
+    elif failure == "wrong_question":
+        prepared.answer_turns[0].question_id = "other-question"
+    elif failure == "partial":
+        prepared.answer_turns[0].transcript_status = "partial"
+    elif failure == "interviewer":
+        prepared.answer_turns[0].speaker = "interviewer"
+    elif failure == "modified":
+        prepared.answer_turns[0].text = "Modified answer"
+    elif failure == "case":
+        evidence.quote = "i built it"
+    elif failure == "fabricated":
+        evidence.quote = "I led a million dollar project"
+    else:
+        item = proposal.questions[0].criteria[-1]
+        item.evidence = [EvidenceQuote(turn_id="foreign", quote="fiction")]
+    with pytest.raises(ProviderProtocolError) as caught:
+        InterviewFeedbackService(
+            preparation_fixture[1], AssessmentProvider(proposal),
+        ).assess(prepared)
+    assert "fiction" not in str(caught.value)
+    assert caught.value.__suppress_context__
+
+
+@pytest.mark.parametrize("category", ["technical", "behavioural"])
+def test_assess_applicability_uses_category_without_wording_heuristics(
+    preparation_fixture, category,
+):
+    prepared = finish_preparation(preparation_fixture)
+    prepared.interview.questions[0].category = category
+    # Deliberately contradictory wording must not override structured category.
+    prepared.interview.questions[0].text = "Describe a past experience with a technical problem"
+    question = replace(prepared.assessment_input.questions[0], category=category)
+    prepared = replace(prepared, assessment_input=replace(
+        prepared.assessment_input, questions=(question,),
+    ))
+    proposal = full_assessment(prepared)
+    service = InterviewFeedbackService(preparation_fixture[1], AssessmentProvider(proposal))
+    assert service.assess(prepared) == proposal
+    irrelevant = "star" if category == "technical" else "technical_reasoning"
+    item = next(item for item in proposal.questions[0].criteria if item.criterion == irrelevant)
+    item.applicability = "insufficient_evidence"
+    with pytest.raises(ProviderProtocolError):
+        service.assess(prepared)
+    item.applicability = "not_applicable"
+    proposal.questions[0].criteria[0] = CriterionFeedback.model_validate(criterion(
+        applicability="not_applicable", score=None, evidence=[],
+    ))
+    with pytest.raises(ProviderProtocolError):
+        service.assess(prepared)
+
+
+def test_assess_combines_local_questions_in_canonical_order(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    first = prepared.interview.questions[0]
+    skipped = first.model_copy(update={"question_id": "skipped", "status": "skipped"})
+    followup = first.model_copy(update={
+        "question_id": "followup", "kind": "follow_up", "parent_question_id": first.question_id,
+    })
+    prepared.interview.questions = [skipped, first, followup, *prepared.interview.questions[1:]]
+    turn = prepared.answer_turns[0].model_copy(update={
+        "turn_id": "followup-turn", "question_id": "followup",
+    })
+    question = replace(prepared.assessment_input.questions[0], question_id="followup", answers=(
+        FinalCandidateAnswerInput(turn.turn_id, turn.text),
+    ))
+    prepared = replace(
+        prepared, answer_turns=(*prepared.answer_turns, turn),
+        submitted_turn_ids=prepared.submitted_turn_ids | {turn.turn_id},
+        assessment_input=replace(prepared.assessment_input, questions=(
+            *prepared.assessment_input.questions, question,
+        )),
+    )
+    proposal = full_assessment(prepared)
+    proposal.questions.reverse()
+    result = InterviewFeedbackService(
+        preparation_fixture[1], AssessmentProvider(proposal),
+    ).assess(prepared)
+    assert [q.question_id for q in result.questions] == ["skipped", first.question_id, "followup"]
+    assert all(c.applicability == "insufficient_evidence" for c in result.questions[0].criteria)
+
+
+@pytest.mark.parametrize("applicability", ["not_applicable", "insufficient_evidence"])
+def test_assess_rejects_grounded_evidence_for_nonassessed_criteria(
+    preparation_fixture, applicability,
+):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    criteria = proposal.questions[0].criteria
+    target = (
+        next(item for item in criteria if item.applicability == "not_applicable")
+        if applicability == "not_applicable" else criteria[0]
+    )
+    target.applicability = applicability
+    target.score = None
+    target.evidence = [EvidenceQuote(
+        turn_id=prepared.answer_turns[0].turn_id, quote="I built it",
+    )]
+    with pytest.raises(ProviderProtocolError):
+        InterviewFeedbackService(
+            preparation_fixture[1], AssessmentProvider(proposal),
+        ).assess(prepared)
+
+
+def test_assess_assessed_criterion_requires_and_accepts_grounded_evidence(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    service = InterviewFeedbackService(preparation_fixture[1], AssessmentProvider(proposal))
+    assert service.assess(prepared) == proposal
+    assert proposal.questions[0].criteria[0].evidence[0].quote == "I built it"
+    proposal.questions[0].criteria[0].evidence = []
+    with pytest.raises(ProviderProtocolError):
+        service.assess(prepared)
+
+
+def test_assess_unexpected_runtime_failure_is_not_provider_protocol_error(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+
+    class BrokenProposal(ModelFeedbackAssessment):
+        def model_dump(self, **kwargs):
+            raise RuntimeError("unexpected serialization failure")
+
+    service = InterviewFeedbackService(
+        preparation_fixture[1], AssessmentProvider(BrokenProposal(questions=[])),
+    )
+    with pytest.raises(RuntimeError, match="unexpected serialization failure"):
+        service.assess(prepared)
+
+
+@pytest.mark.parametrize("error_type", [ProviderUnavailableError, ProviderProtocolError])
+def test_assess_preserves_provider_exception_identity(preparation_fixture, error_type):
+    prepared = finish_preparation(preparation_fixture)
+    error = error_type("Provider failure")
+
+    class FailingProvider:
+        def assess(self, assessment_input):
+            raise error
+
+    service = InterviewFeedbackService(preparation_fixture[1], FailingProvider())
+    with pytest.raises(error_type) as caught:
+        service.assess(prepared)
+    assert caught.value is error
