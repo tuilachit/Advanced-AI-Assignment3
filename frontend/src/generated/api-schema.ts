@@ -208,6 +208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/interviews/{interview_id}/realtime-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Token */
+        post: operations["token_api_sessions__session_id__interviews__interview_id__realtime_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{session_id}/interviews/{interview_id}/skip": {
         parameters: {
             query?: never;
@@ -834,6 +851,17 @@ export interface components {
         ProfileUpdateRequest: {
             /** Facts */
             facts: components["schemas"]["FactInput"][];
+        };
+        /** RealtimeCredential */
+        RealtimeCredential: {
+            /** Client Secret */
+            client_secret: string;
+            /** Connection Id */
+            connection_id: string;
+            /** Expires At */
+            expires_at: number;
+            /** Model */
+            model: string;
         };
         /** ResumeEntry */
         ResumeEntry: {
@@ -1904,6 +1932,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AskQuestionStep"] | components["schemas"]["FinishStep"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    token_api_sessions__session_id__interviews__interview_id__realtime_token_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RealtimeCredential"];
                 };
             };
             /** @description Session or resource not found */

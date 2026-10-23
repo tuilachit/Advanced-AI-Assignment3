@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import Field, field_validator
 
 from app.api.interviews import build_interview_router, register_interview_error_handlers
+from app.api.realtime import build_realtime_router
 from app.domain.models import (
     AgentObservation,
     CVDocument,
@@ -33,6 +34,11 @@ from app.providers.base import (
 )
 from app.providers.openai_interview_planner import OpenAIQuestionPlanner, interview_model
 from app.providers.openai_provider import OpenAIEmbeddingProvider, OpenAIModelProvider
+from app.providers.realtime import (
+    MissingRealtimeProvider,
+    OpenAIRealtimeProvider,
+    RealtimeProvider,
+)
 from app.providers.unavailable import MissingOpenAIProvider
 from app.services.agent import AgentService, AgentStepLimitError
 from app.services.cv import CVEvidenceError, CVService
@@ -207,7 +213,10 @@ def _error_response(
     )
 
 
-def create_app(services: ApplicationServices | None = None) -> FastAPI:
+def create_app(
+    services: ApplicationServices | None = None,
+    *, realtime_provider: RealtimeProvider | None = None,
+) -> FastAPI:
     app = FastAPI(
         title="Evidence CV API",
         version="0.1.0",
@@ -224,6 +233,19 @@ def create_app(services: ApplicationServices | None = None) -> FastAPI:
 
     register_interview_error_handlers(app)
     app.include_router(build_interview_router(active.interviews))
+    if realtime_provider is None:
+        voice_settings = Settings.from_environment()
+        realtime_provider = (
+            OpenAIRealtimeProvider(
+                api_key=voice_settings.openai_api_key,
+                model=voice_settings.openai_realtime_model,
+                transcription_model=voice_settings.openai_transcription_model,
+                voice=voice_settings.openai_voice,
+                speed=voice_settings.openai_voice_speed,
+                noise_reduction=voice_settings.openai_input_noise_reduction,
+            ) if voice_settings.openai_api_key else MissingRealtimeProvider()
+        )
+    app.include_router(build_realtime_router(active.interviews, realtime_provider))
 
     @app.exception_handler(SessionNotFoundError)
     async def session_not_found(_request: Request, _error: SessionNotFoundError) -> JSONResponse:
