@@ -7,7 +7,11 @@ interviews are immutable through the flow API; bracketed reads verify that premi
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from copy import deepcopy
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from uuid import uuid4
 
 from pydantic import ValidationError
 
@@ -15,9 +19,11 @@ from app.domain.feedback_models import (
     Applicability,
     CriterionFeedback,
     CriterionName,
+    FeedbackReport,
     FeedbackRequest,
     ModelFeedbackAssessment,
     ModelQuestionAssessment,
+    QuestionFeedback,
 )
 from app.domain.interview_models import Interview, InterviewContextSnapshot, TranscriptTurn
 from app.domain.models import FactStatus
@@ -29,6 +35,7 @@ from app.providers.interview_feedback import (
     InterviewFeedbackProvider,
     QuestionAssessmentInput,
 )
+from app.services.feedback_metrics import calculate_speaking_metrics, count_words
 from app.services.interview_flow import InterviewConflictError, InterviewFlowService
 
 # Fact.field is unrestricted. These exact labels come from workflow required fields,
@@ -78,10 +85,14 @@ def _evaluation_state(interview: Interview) -> dict[str, object]:
 
 class InterviewFeedbackService:
     def __init__(
-        self, flow: InterviewFlowService, provider: InterviewFeedbackProvider
+        self, flow: InterviewFlowService, provider: InterviewFeedbackProvider,
+        *, clock: Callable[[], datetime] | None = None,
+        report_id_factory: Callable[[], str] | None = None,
     ) -> None:
         self._flow = flow
         self._provider = provider
+        self._clock = clock or (lambda: datetime.now(UTC))
+        self._report_id_factory = report_id_factory or (lambda: str(uuid4()))
 
     def prepare(
         self, session_id: str, interview_id: str, request: FeedbackRequest
@@ -224,3 +235,68 @@ class InterviewFeedbackService:
             return ModelFeedbackAssessment(questions=combined)
         except (ValidationError, _AssessmentContractError):
             raise ProviderProtocolError(_INVALID_ASSESSMENT) from None
+
+    def evaluate(self, prepared: PreparedFeedback) -> FeedbackReport:
+        """Construct a caller-owned report synchronously; do not save or change status."""
+        snapshot = deepcopy(prepared)
+        assessment = self.assess(snapshot)
+        by_id = {question.question_id: question for question in assessment.questions}
+        questions: list[QuestionFeedback] = []
+        skipped = missing = transcription_incomplete = timing_unavailable = timing_partial = False
+        for question in snapshot.interview.questions:
+            if question.status == "planned":
+                continue
+            turns = [
+                turn for turn in snapshot.answer_turns
+                if question.status == "answered"
+                and turn.question_id == question.question_id
+                and turn.turn_id in snapshot.submitted_turn_ids
+                and turn.speaker == "candidate"
+                and turn.transcript_status == "final"
+                and turn.text.strip()
+            ]
+            metrics = calculate_speaking_metrics(turns, question_id=question.question_id)
+            wpm = metrics[0]
+            usable_ids = {turn.turn_id for turn in turns if count_words(turn.text) > 0}
+            skipped |= question.status == "skipped"
+            missing |= not turns and question.status != "skipped"
+            timing_unavailable |= wpm.status == "not_available"
+            timing_partial |= wpm.status == "available" and set(wpm.turn_ids) != usable_ids
+            transcription_incomplete |= any(
+                turn.question_id == question.question_id
+                and turn.speaker == "candidate"
+                and turn.transcript_status in {"pending", "partial", "failed"}
+                for turn in snapshot.interview.turns
+            )
+            criteria = {item.criterion: item for item in by_id[question.question_id].criteria}
+            questions.append(QuestionFeedback(
+                question_id=question.question_id,
+                criteria=[criteria[name].model_copy(deep=True) for name in CriterionName],
+                speaking_metrics=metrics,
+            ))
+        # Fixed condition order and constant text: never include user data or parse methods.
+        limitations = [message for applies, message in (
+            (skipped, "Skipped questions have insufficient evidence and are not scored."),
+            (missing, "Some asked questions have no usable submitted final candidate answer."),
+            (transcription_incomplete,
+             "Some candidate transcription for asked questions is incomplete or failed."),
+            (timing_unavailable,
+             "Words per minute is unavailable for some questions without valid timed answers."),
+            (timing_partial,
+             "Some words-per-minute estimates cover only the subset of answers with valid timing."),
+            (bool(questions),
+             "Transcript-based filler counts may reflect ASR errors and omit spoken fillers."),
+            (bool(questions),
+             "Pause analysis is unavailable without analysed audio intervals and a threshold."),
+            (True, "Criterion feedback is automated coaching, not an employability decision."),
+            (True, "Exact quote validation does not verify the truth of real-world answer claims."),
+        ) if applies]
+        return FeedbackReport(
+            schema_version="1.0", rubric_version="1.0",
+            report_id=self._report_id_factory(),
+            interview_id=snapshot.interview.interview_id,
+            context_hash=snapshot.interview.context_hash,
+            transcript_revision=snapshot.interview.transcript_revision,
+            generated_at=self._clock(), question_feedback=questions,
+            limitations=list(dict.fromkeys(limitations)),
+        )

@@ -1058,3 +1058,175 @@ def test_assess_preserves_provider_exception_identity(preparation_fixture, error
     with pytest.raises(error_type) as caught:
         service.assess(prepared)
     assert caught.value is error
+
+
+def report_service(fixture, prepared, proposal=None):
+    provider = AssessmentProvider(proposal if proposal is not None else full_assessment(prepared))
+    service = InterviewFeedbackService(
+        fixture[1], provider,
+        clock=lambda: datetime(2026, 10, 23, 4, 5, 6, tzinfo=UTC),
+        report_id_factory=lambda: "fixed-report-id",
+    )
+    return service, provider
+
+
+def test_evaluate_metadata_order_metrics_and_copy_isolation(preparation_fixture, monkeypatch):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    proposal.questions[0].criteria.reverse()
+    before = deepcopy((prepared, proposal))
+    service, provider = report_service(preparation_fixture, prepared, proposal)
+    original_assess = service.assess
+    calls = []
+
+    def counted_assess(snapshot):
+        calls.append(snapshot)
+        return original_assess(snapshot)
+
+    monkeypatch.setattr(service, "assess", counted_assess)
+    result = service.evaluate(prepared)
+    assert len(calls) == len(provider.calls) == 1
+    assert result.schema_version == result.rubric_version == "1.0"
+    assert result.report_id == "fixed-report-id"
+    assert result.interview_id == prepared.interview.interview_id
+    assert result.context_hash == prepared.interview.context_hash
+    assert result.transcript_revision == prepared.interview.transcript_revision
+    assert result.generated_at == datetime(2026, 10, 23, 4, 5, 6, tzinfo=UTC)
+    assert result.generated_at.tzinfo is UTC
+    question = result.question_feedback[0]
+    assert [item.criterion.value for item in question.criteria] == [
+        "relevance", "specificity", "structure", "technical_reasoning", "star",
+    ]
+    assert question.speaking_metrics == calculate_speaking_metrics(
+        prepared.answer_turns, question_id=question.question_id,
+    )
+    assert [metric.name for metric in question.speaking_metrics] == [
+        "words_per_minute", "transcript_filler_count", "pause_count",
+    ]
+    assert (prepared, proposal) == before
+    result.question_feedback[0].criteria[0].evidence[0].quote = "Changed report"
+    result.limitations.clear()
+    assert (prepared, proposal) == before
+    flow = preparation_fixture[1]
+    stored = flow.get(preparation_fixture[7], prepared.interview.interview_id)
+    assert stored == prepared.interview
+    assert stored.feedback_status == "not_requested"
+
+
+@pytest.mark.parametrize("timing", ["none", "partial", "complete"])
+def test_evaluate_timing_coverage_and_zero_fillers(preparation_fixture, timing):
+    prepared = finish_preparation(preparation_fixture)
+    first = prepared.answer_turns[0].model_copy(deep=True)
+    first.text = "I built it"
+    second = first.model_copy(deep=True, update={"turn_id": "second"})
+    if timing in {"none", "partial"}:
+        second.timing = None
+    if timing == "none":
+        first.timing = None
+    source = prepared.assessment_input.questions[0]
+    prepared = replace(
+        prepared, answer_turns=(first, second),
+        submitted_turn_ids=frozenset({first.turn_id, second.turn_id}),
+        assessment_input=replace(prepared.assessment_input, questions=(replace(
+            source, answers=tuple(FinalCandidateAnswerInput(t.turn_id, t.text)
+                                  for t in (first, second)),
+        ),)),
+    )
+    service, provider = report_service(preparation_fixture, prepared)
+    result = service.evaluate(prepared)
+    wpm, filler, pause = result.question_feedback[0].speaking_metrics
+    assert len(provider.calls) == 1
+    assert filler.status == "available" and filler.value == 0
+    assert pause.status == "not_available" and pause.value is None
+    assert any("Pause analysis" in message for message in result.limitations)
+    assert any("ASR errors" in message for message in result.limitations)
+    assert any("employability" in message for message in result.limitations)
+    assert any("truth" in message for message in result.limitations)
+    if timing == "none":
+        assert wpm.status == "not_available" and wpm.value is None
+        assert any("Words per minute is unavailable" in text for text in result.limitations)
+    else:
+        assert wpm.status == "available"
+        assert (set(wpm.turn_ids) == {first.turn_id, second.turn_id}) == (timing == "complete")
+    assert any("subset" in text for text in result.limitations) == (timing == "partial")
+
+
+@pytest.mark.parametrize("status", ["skipped", "issued", "answered"])
+def test_evaluate_no_usable_answer_has_unavailable_metrics(preparation_fixture, status):
+    prepared = finish_preparation(preparation_fixture)
+    prepared.interview.questions[0].status = status
+    prepared = replace(
+        prepared, answer_turns=(), submitted_turn_ids=frozenset(),
+        assessment_input=replace(prepared.assessment_input, questions=()),
+    )
+    service, provider = report_service(preparation_fixture, prepared)
+    result = service.evaluate(prepared)
+    assert provider.calls == []
+    question = result.question_feedback[0]
+    assert len(question.criteria) == 5
+    assert all(item.applicability == "insufficient_evidence" for item in question.criteria)
+    assert len(question.speaking_metrics) == 3
+    assert all(metric.status == "not_available" and metric.value is None
+               for metric in question.speaking_metrics)
+    assert any("Skipped" in text for text in result.limitations) == (status == "skipped")
+    assert any("no usable submitted" in text for text in result.limitations) == (
+        status != "skipped"
+    )
+
+
+def test_evaluate_limitations_are_ordered_deduplicated_and_private(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    original = prepared.interview.questions[0]
+    skipped = original.model_copy(update={"question_id": "skipped", "status": "skipped"})
+    missing = original.model_copy(update={"question_id": "missing", "status": "issued"})
+    prepared.interview.questions = [skipped, original, missing, *prepared.interview.questions[1:]]
+    for index, status in enumerate(["failed", "partial", "failed"]):
+        prepared.interview.turns.append(prepared.answer_turns[0].model_copy(update={
+            "turn_id": f"bad-{index}", "transcript_status": status,
+            "text": "PRIVATE_TRANSCRIPT_SECRET",
+        }))
+    service, _ = report_service(preparation_fixture, prepared)
+    result = service.evaluate(prepared)
+    assert [q.question_id for q in result.question_feedback] == [
+        "skipped", original.question_id, "missing",
+    ]
+    assert result.limitations == [
+        "Skipped questions have insufficient evidence and are not scored.",
+        "Some asked questions have no usable submitted final candidate answer.",
+        "Some candidate transcription for asked questions is incomplete or failed.",
+        "Words per minute is unavailable for some questions without valid timed answers.",
+        "Transcript-based filler counts may reflect ASR errors and omit spoken fillers.",
+        "Pause analysis is unavailable without analysed audio intervals and a threshold.",
+        "Criterion feedback is automated coaching, not an employability decision.",
+        "Exact quote validation does not verify the truth of real-world answer claims.",
+    ]
+    assert result.limitations == service.evaluate(prepared).limitations
+    assert len(result.limitations) == len(set(result.limitations))
+    assert "PRIVATE_TRANSCRIPT_SECRET" not in "\n".join(result.limitations)
+
+
+@pytest.mark.parametrize("status", ["partial", "failed"])
+def test_evaluate_ignores_transcription_for_unasked_planned_questions(preparation_fixture, status):
+    prepared = finish_preparation(preparation_fixture)
+    prepared.interview.turns.append(prepared.answer_turns[0].model_copy(update={
+        "turn_id": "unasked", "question_id": prepared.interview.questions[-1].question_id,
+        "transcript_status": status,
+    }))
+    service, _ = report_service(preparation_fixture, prepared)
+    result = service.evaluate(prepared)
+    assert not any("incomplete or failed" in text for text in result.limitations)
+
+
+def test_evaluate_default_dependencies_and_timezone_normalization(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    service = InterviewFeedbackService(
+        preparation_fixture[1], AssessmentProvider(full_assessment(prepared)),
+    )
+    report = service.evaluate(prepared)
+    assert report.report_id.strip() and report.generated_at.tzinfo is UTC
+    service = InterviewFeedbackService(
+        preparation_fixture[1], AssessmentProvider(full_assessment(prepared)),
+        clock=lambda: datetime(2026, 10, 23, 15, tzinfo=timezone(timedelta(hours=11))),
+        report_id_factory=lambda: "fixed",
+    )
+    assert service.evaluate(prepared).generated_at == datetime(2026, 10, 23, 4, tzinfo=UTC)
