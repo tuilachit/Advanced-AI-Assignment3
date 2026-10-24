@@ -191,6 +191,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/interviews/{interview_id}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Feedback */
+        get: operations["get_feedback_api_sessions__session_id__interviews__interview_id__feedback_get"];
+        put?: never;
+        /** Start Feedback */
+        post: operations["start_feedback_api_sessions__session_id__interviews__interview_id__feedback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{session_id}/interviews/{interview_id}/next-step": {
         parameters: {
             query?: never;
@@ -445,6 +463,11 @@ export interface components {
             /** Message */
             message: string;
         };
+        /**
+         * Applicability
+         * @enum {string}
+         */
+        Applicability: "assessed" | "not_applicable" | "insufficient_evidence";
         /** AskQuestionStep */
         AskQuestionStep: {
             /**
@@ -467,6 +490,24 @@ export interface components {
             /** Request Id */
             request_id: string;
         };
+        /** CriterionFeedback */
+        CriterionFeedback: {
+            applicability: components["schemas"]["Applicability"];
+            criterion: components["schemas"]["CriterionName"];
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceQuote"][];
+            /** Explanation */
+            explanation: string;
+            /** Improvement */
+            improvement: string | null;
+            /** Score */
+            score: number | null;
+        };
+        /**
+         * CriterionName
+         * @enum {string}
+         */
+        CriterionName: "relevance" | "specificity" | "structure" | "technical_reasoning" | "star";
         /** CVClaim */
         "CVClaim-Input": {
             /** Claim Id */
@@ -544,6 +585,13 @@ export interface components {
             /** Heading */
             heading: string;
         };
+        /** EvidenceQuote */
+        EvidenceQuote: {
+            /** Quote */
+            quote: string;
+            /** Turn Id */
+            turn_id: string;
+        };
         /** Fact */
         Fact: {
             /** Fact Id */
@@ -579,6 +627,63 @@ export interface components {
          * @enum {string}
          */
         FactStatus: "draft" | "confirmed";
+        /** FeedbackReport */
+        FeedbackReport: {
+            /** Context Hash */
+            context_hash: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Interview Id */
+            interview_id: string;
+            /** Limitations */
+            limitations: string[];
+            /** Question Feedback */
+            question_feedback: components["schemas"]["QuestionFeedback"][];
+            /** Report Id */
+            report_id: string;
+            /**
+             * Rubric Version
+             * @default 1.0
+             * @constant
+             */
+            rubric_version: "1.0";
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Transcript Revision */
+            transcript_revision: number;
+        };
+        /** FeedbackRequest */
+        FeedbackRequest: {
+            /** Expected Transcript Revision */
+            expected_transcript_revision: number;
+            /** Request Id */
+            request_id: string;
+        };
+        /** FeedbackResponse */
+        FeedbackResponse: {
+            error: components["schemas"]["ApiErrorBody"] | null;
+            /**
+             * Feedback Status
+             * @enum {string}
+             */
+            feedback_status: "not_requested" | "generating" | "ready" | "failed";
+            report: components["schemas"]["FeedbackReport"] | null;
+        };
+        /** FeedbackStartResponse */
+        FeedbackStartResponse: {
+            /**
+             * Feedback Status
+             * @constant
+             */
+            feedback_status: "generating";
+        };
         /** FinishStep */
         FinishStep: {
             /**
@@ -835,6 +940,15 @@ export interface components {
             /** Facts */
             facts: components["schemas"]["FactInput"][];
         };
+        /** QuestionFeedback */
+        QuestionFeedback: {
+            /** Criteria */
+            criteria: components["schemas"]["CriterionFeedback"][];
+            /** Question Id */
+            question_id: string;
+            /** Speaking Metrics */
+            speaking_metrics: components["schemas"]["SpeakingMetric"][];
+        };
         /** ResumeEntry */
         ResumeEntry: {
             /** Bullets */
@@ -983,6 +1097,32 @@ export interface components {
             question_id: string;
             /** Request Id */
             request_id: string;
+        };
+        /** SpeakingMetric */
+        SpeakingMetric: {
+            /** Method */
+            method: string;
+            /**
+             * Name
+             * @enum {string}
+             */
+            name: "words_per_minute" | "transcript_filler_count" | "pause_count";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "available" | "not_available";
+            /** Turn Ids */
+            turn_ids: string[];
+            /** Unavailable Reason */
+            unavailable_reason: string | null;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "words/min" | "count";
+            /** Value */
+            value: number | null;
         };
         /** StartInterviewRequest */
         StartInterviewRequest: {
@@ -1832,6 +1972,146 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    get_feedback_api_sessions__session_id__interviews__interview_id__feedback_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackResponse"];
+                };
+            };
+            /** @description Session or resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Workflow state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Request or evidence validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description Agent step limit reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+            /** @description AI provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorBody"];
+                };
+            };
+        };
+    };
+    start_feedback_api_sessions__session_id__interviews__interview_id__feedback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackStartResponse"];
                 };
             };
             /** @description Session or resource not found */

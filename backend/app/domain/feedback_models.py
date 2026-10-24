@@ -6,6 +6,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import AfterValidator, AwareDatetime, Field, field_validator, model_validator
 
+from app.domain.api_errors import ApiErrorBody
 from app.domain.models import StrictModel
 
 
@@ -163,3 +164,17 @@ class FeedbackRequest(StrictModel):
 
 class FeedbackStartResponse(StrictModel):
     feedback_status: Literal["generating"]
+
+
+class FeedbackResponse(StrictModel):
+    feedback_status: Literal["not_requested", "generating", "ready", "failed"]
+    report: FeedbackReport | None = None
+    error: ApiErrorBody | None = None
+
+    @model_validator(mode="after")
+    def validate_state(self) -> Self:
+        if (self.report is not None) != (self.feedback_status == "ready"):
+            raise ValueError("Only ready feedback requires a complete report.")
+        if (self.error is not None) != (self.feedback_status == "failed"):
+            raise ValueError("Only failed feedback requires an error envelope.")
+        return self

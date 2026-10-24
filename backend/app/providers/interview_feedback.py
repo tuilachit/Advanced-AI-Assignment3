@@ -184,3 +184,8 @@ class OpenAIInterviewFeedbackProvider:
             return ModelFeedbackAssessment.model_validate(parsed.model_dump(warnings=False))
         except Exception:
             raise ProviderProtocolError(_PROTOCOL_MESSAGE) from None
+
+
+class UnavailableInterviewFeedbackProvider:
+    def assess(self, assessment_input: FeedbackAssessmentInput) -> ModelFeedbackAssessment:
+        raise ProviderUnavailableError("The interview feedback provider is unavailable.")
