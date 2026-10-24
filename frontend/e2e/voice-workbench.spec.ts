@@ -29,9 +29,16 @@ test('fits a phone screen and disables orb motion for reduced-motion users', asy
   await expect(page.getByRole('button', { name: 'Finish interview' })).toBeVisible()
 })
 
-test('wires transport activity, mute and finish to the orb without external API calls', async ({ page }) => {
+for (const blocked of [false, true]) test(`speaks automatically with ${blocked ? 'blocked then enabled' : 'ready'} playback and wires interview controls`, async ({ page }) => {
   // Replace only external transport/hardware; use the real controller, adapter and views.
-  await page.addInitScript(() => {
+  await page.addInitScript((blocked) => {
+    let playbackAllowed = !blocked
+    Object.defineProperty(HTMLMediaElement.prototype, 'paused', { get() { return !playbackAllowed } })
+    HTMLMediaElement.prototype.play = async function () {
+      if (!playbackAllowed) throw new DOMException('Autoplay blocked', 'NotAllowedError')
+    }
+    HTMLMediaElement.prototype.pause = function () {}
+    Object.assign(window, { __enablePlayback: () => { playbackAllowed = true } })
     Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: async () => new MediaStream() })
     class Channel extends EventTarget {
       readyState = 'open'
@@ -59,10 +66,12 @@ test('wires transport activity, mute and finish to the orb without external API 
       }
       async createOffer() { return { type: 'offer', sdp: 'fixture-offer' } }
       async setLocalDescription() {}
-      async setRemoteDescription() {}
+      async setRemoteDescription() {
+        this.dispatchEvent(Object.assign(new Event('track'), { streams: [new MediaStream()] }))
+      }
     }
     Object.defineProperty(window, 'RTCPeerConnection', { value: Peer })
-  })
+  }, blocked)
   await page.route('**/api/voice-demo', (route) => route.fulfill({ json: interviewFixture() }))
   await page.route('**/api/sessions/s1/interviews/i1**', (route) => {
     const action = new URL(route.request().url()).pathname.split('/').at(-1)
@@ -77,6 +86,13 @@ test('wires transport activity, mute and finish to the orb without external API 
   await page.locator('#consent').check()
   await page.locator('#prepare').click()
   await page.locator('#connect').click()
+  if (blocked) {
+    await expect(page.locator('#error')).toContainText('blocked audio playback')
+    await expect(page.locator('#transcript')).not.toContainText('Interviewer')
+    await page.evaluate(() => (window as unknown as { __enablePlayback: () => void }).__enablePlayback())
+    await page.locator('#audio').click()
+    await expect(page.locator('#error')).toBeEmpty()
+  }
   await expect(page.locator('#voice-orb')).toHaveAttribute('data-state', 'speaking')
   await page.evaluate(() => {
     const emit = (window as unknown as { __emitVoice: (event: unknown) => void }).__emitVoice

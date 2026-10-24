@@ -9,27 +9,30 @@ function platform(denyMicrophone = false, denySdp = false) {
   let stopped = false
   let closed = false
   let tokenExposed = false
+  const sent: Record<string, unknown>[] = []
   const track = { enabled: true, stop: () => { stopped = true } }
-  const channel = Object.assign(new EventTarget(), { readyState: 'open', send: () => {}, close: () => {} })
-  const peer = { addTrack: () => {}, addEventListener: () => {}, close: () => { closed = true },
+  const channel = Object.assign(new EventTarget(), { readyState: 'open',
+    send: (value: string) => { sent.push(JSON.parse(value)) }, close: () => {} })
+  const peer = Object.assign(new EventTarget(), { addTrack: () => {}, close: () => { closed = true },
     createDataChannel: () => channel, createOffer: async () => ({ type: 'offer', sdp: 'fixture-sdp' }),
     setLocalDescription: async () => {}, setRemoteDescription: async () => {},
-    connectionState: 'connected' }
+    connectionState: 'connected' })
   const stream = { getTracks: () => [track], getAudioTracks: () => [track] }
+  const audio = { play: async () => {}, pause: () => {}, paused: false,
+    muted: false, srcObject: null, autoplay: true }
   const impl: VoicePlatform = {
     get_user_media: async () => {
       if (denyMicrophone) throw new DOMException('Permission denied', 'NotAllowedError')
       return stream as unknown as MediaStream
     },
     create_peer: () => peer as unknown as RTCPeerConnection,
-    create_audio: () => ({ play: async () => {}, pause: () => {}, paused: false,
-      muted: false, srcObject: null, autoplay: true } as unknown as HTMLAudioElement),
+    create_audio: () => audio as unknown as HTMLAudioElement,
     fetch: async (_url, options) => {
       tokenExposed = String(options?.headers).includes('permanent-key')
       return new Response(denySdp ? 'private upstream error' : 'fixture-answer', { status: denySdp ? 503 : 201 })
     },
   }
-  return { impl, track, channel, stopped: () => stopped, closed: () => closed,
+  return { impl, track, channel, peer, audio, stream, sent, stopped: () => stopped, closed: () => closed,
     tokenExposed: () => tokenExposed }
 }
 
@@ -49,6 +52,61 @@ function voiceApi() {
       connection_id: 'c1', model: 'gpt-realtime-2' }),
     turn: async () => ({ event_id: 'e1', turn_id: 't1', transcript_revision: 1 }) }
 }
+
+it('speaks the first issued question automatically once the remote audio is playable', async () => {
+  const device = platform()
+  device.audio.paused = true
+  device.audio.play = async () => { device.audio.paused = false }
+  const controller = new RealtimeVoiceController(voiceApi(), device.impl)
+  try {
+    await controller.connect('i1')
+    expect(device.sent.filter(event => event.type === 'response.create')).toHaveLength(0)
+    device.peer.dispatchEvent(Object.assign(new Event('track'), { streams: [device.stream] }))
+    await Promise.resolve()
+    expect(device.sent.filter(event => event.type === 'response.create')).toEqual([
+      expect.objectContaining({ response: expect.objectContaining({
+        metadata: { question_id: 'q1' }, output_modalities: ['audio'], tool_choice: 'none',
+      }) }),
+    ])
+    await controller.resume_audio()
+    expect(device.sent.filter(event => event.type === 'response.create')).toHaveLength(1)
+  } finally { controller.disconnect() }
+})
+
+it('does not lose a question behind blocked autoplay and speaks it after Enable audio', async () => {
+  const device = platform()
+  const events: VoiceEvent[] = []
+  device.audio.paused = true
+  device.audio.play = async () => { throw new DOMException('Blocked', 'NotAllowedError') }
+  const controller = new RealtimeVoiceController(voiceApi(), device.impl)
+  controller.subscribe(event => events.push(event))
+  try {
+    await controller.connect('i1')
+    device.peer.dispatchEvent(Object.assign(new Event('track'), { streams: [device.stream] }))
+    await Promise.resolve()
+    expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'audio_playback_blocked' }))
+    expect(device.sent.filter(event => event.type === 'response.create')).toHaveLength(0)
+    device.audio.play = async () => { device.audio.paused = false }
+    await controller.resume_audio()
+    expect(device.sent.filter(event => event.type === 'response.create')).toHaveLength(1)
+  } finally { controller.disconnect() }
+})
+
+it('ignores a late playback rejection from a disconnected interview', async () => {
+  const device = platform()
+  const events: VoiceEvent[] = []
+  let rejectPlayback!: (reason: unknown) => void
+  device.audio.play = () => new Promise<void>((_resolve, reject) => { rejectPlayback = reject })
+  const controller = new RealtimeVoiceController(voiceApi(), device.impl)
+  controller.subscribe(event => events.push(event))
+  await controller.connect('i1')
+  const playing = controller.resume_audio()
+  controller.disconnect()
+  rejectPlayback(new DOMException('Old blocked playback', 'NotAllowedError'))
+  await playing
+  expect(events.at(-1)).toEqual({ type: 'connection', status: 'disconnected' })
+  expect(events.some(event => event.type === 'error')).toBe(false)
+})
 
 it('keeps the channel open for pending transcripts while the backend is finalizing', async () => {
   vi.useFakeTimers()

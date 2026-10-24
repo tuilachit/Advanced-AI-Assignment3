@@ -230,10 +230,16 @@ export class RealtimeVoiceController {
   }
 
   async resume_audio(): Promise<void> {
-    try { await this.audio?.play() }
+    const audio = this.audio
+    const engine = this.engine
+    try {
+      await audio?.play()
+      if (audio && audio === this.audio && engine === this.engine) engine?.resumeSpeech()
+    }
     catch {
+      if (audio !== this.audio || engine !== this.engine) return
       this.emit({ type: 'error', code: 'audio_playback_blocked',
-        message: 'Your browser blocked audio playback. Press Enable audio to listen.', retryable: true })
+        message: 'Your browser blocked audio playback. Press Enable audio; your interviewer will then speak the question.', retryable: true })
     }
   }
 

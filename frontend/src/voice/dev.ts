@@ -89,7 +89,7 @@ button('mute').onclick = () => {
   button('mute').setAttribute('title', muted ? 'Unmute microphone' : 'Mute microphone')
   button('mute').setAttribute('aria-pressed', String(muted))
 }
-button('audio').onclick = () => { void controller?.resume_audio() }
+button('audio').onclick = () => { fail(''); void controller?.resume_audio() }
 button('skip').onclick = async () => {
   try { await controller?.skip() } catch { fail('Question could not be skipped. Reconnect and retry.') }
 }

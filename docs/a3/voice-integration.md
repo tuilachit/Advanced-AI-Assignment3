@@ -57,8 +57,12 @@ not part of the normal application. It avoids making additional profile/CV/plann
 testing native audio. Voice/transcription requests still use the real configured provider and
 can incur charges.
 
-Agree to audio/transcript use, prepare the synthetic demo, start voice, then answer the issued
-question. Mute, Enable audio, Skip and Finish are explicit controls. Browser microphone denial
+Agree to audio/transcript use, prepare the synthetic demo and start voice. The interviewer
+automatically speaks the first and every subsequent issued question; the displayed question
+is a text backup, not a prompt the candidate needs to read or request aloud. Speech requests
+wait until output playback is available. If autoplay is blocked, Enable audio resumes the
+waiting question without advancing the interview or requiring a greeting.
+Mute, Enable audio, Skip and Finish are explicit controls. Browser microphone denial
 and connection failures are shown without leaking provider responses or credentials. Closing
 or disconnecting releases tracks, playback and the peer connection.
 

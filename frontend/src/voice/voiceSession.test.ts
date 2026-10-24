@@ -56,6 +56,32 @@ function advance(session: InterviewVoiceSession, args = '{"follow_up_question":"
 }
 
 describe('native voice transcript and progression', () => {
+  it('speaks each newly issued question after playback recovers, without a candidate prompt', async () => {
+    const { session, sent, api } = setup()
+    let audible = true
+    const gated = new InterviewVoiceSession({ interview: fixture(), connection_id: 'c1', api,
+      send: event => sent.push(event), emit: () => {}, can_hear_audio: () => audible })
+    try {
+      gated.askCurrentQuestion()
+      gated.handle({ type: 'response.created', response: { id: 'r1' } })
+      gated.handle({ type: 'response.done', response: { id: 'r1', status: 'completed', output: [] } })
+      audible = false
+      speech(gated)
+      final(gated)
+      advance(gated)
+      await gated.flush()
+      expect(gated.interview.current_question_id).toBe('q2')
+      expect(sent.filter(event => event.type === 'response.create')).toHaveLength(1)
+      audible = true
+      gated.resumeSpeech()
+      expect(sent.filter(event => event.type === 'response.create')).toHaveLength(2)
+      expect(sent.at(-1)).toMatchObject({ response: { metadata: { question_id: 'q2' },
+        output_modalities: ['audio'], tool_choice: 'none' } })
+      gated.resumeSpeech()
+      expect(sent.filter(event => event.type === 'response.create')).toHaveLength(2)
+    } finally { gated.close(); session.close() }
+  })
+
   it('keeps pending transcript delivery open when Skip reaches finalizing', async () => {
     const { session, events, api, saved } = setup()
     api.get = async () => ({ ...fixture(), phase: 'finalizing', current_question_id: null })
