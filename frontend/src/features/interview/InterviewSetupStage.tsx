@@ -22,7 +22,7 @@ export function InterviewSetupStage({ session, busy, visible = true, onReviewPro
   const readiness = interviewReadiness(session)
   const interview = setup.interview
 
-  if (interview && view === 'feedback') return <InterviewFeedback key={interview.interview_id} interview={interview}
+  if (interview && view === 'feedback') return <InterviewFeedback key={interview.interview_id} interview={interview} visible={visible}
     onBack={() => setView('live')} onSetup={() => setView('setup')} />
   if (interview && view === 'live') return <LiveInterviewStage key={interview.interview_id} interview={interview} visible={visible}
     onClose={(updated) => { setup.updateInterview(updated); setView('setup') }}

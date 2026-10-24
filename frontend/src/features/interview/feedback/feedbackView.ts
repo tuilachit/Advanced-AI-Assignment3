@@ -1,7 +1,7 @@
 import type { Interview } from '../../../types'
 
-// Presentation models, not wire DTOs. Sunny's feedback models are not in the
-// merged OpenAPI schema yet. A future adapter maps generated API aliases here.
+// Presentation models only. feedbackService maps Sunny's generated API types
+// here without computing scores, applicability or speaking measurements.
 export type CriterionKey = 'relevance' | 'specificity' | 'structure' | 'technicalReasoning' | 'star'
 export interface EvidenceReference { turnId: string; excerpt: string }
 export interface CriterionReview {
@@ -34,12 +34,18 @@ export interface FeedbackView {
   limitations: string[]
 }
 
-export interface FeedbackSource {
-  kind: 'sample' | 'service'
-  // The future adapter owns API request IDs, start/poll behaviour and conversion
-  // from generated types. The screen does not guess routes or implement scoring.
+export interface SampleFeedbackSource {
+  kind: 'sample'
   load(interview: Interview, signal: AbortSignal): Promise<FeedbackView>
 }
+export type FeedbackReadState = { status: 'not_requested' | 'generating' } |
+  { status: 'ready'; report: FeedbackView } | { status: 'failed'; retryable: boolean; message: string }
+export interface ServiceFeedbackSource {
+  kind: 'service'
+  read(interview: Interview, signal: AbortSignal): Promise<FeedbackReadState>
+  generate(interview: Interview, requestId: string, signal: AbortSignal): Promise<void>
+}
+export type FeedbackSource = SampleFeedbackSource | ServiceFeedbackSource
 
 export const criterionLabels: Record<CriterionKey, string> = {
   relevance: 'Relevance', specificity: 'Specificity', structure: 'Structure',

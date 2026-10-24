@@ -28,6 +28,12 @@ export type CreateInterviewRequest = ApiSchemas['CreateInterviewRequest']
 export type InterviewConfig = ApiSchemas['InterviewConfig-Input']
 export type InterviewQuestion = ApiSchemas['InterviewQuestion']
 export type TranscriptTurn = ApiSchemas['TranscriptTurn']
+export type FeedbackRequest = ApiSchemas['FeedbackRequest']
+export type FeedbackStartResponse = ApiSchemas['FeedbackStartResponse']
+export type FeedbackResponse = ApiSchemas['FeedbackResponse']
+export type FeedbackReport = ApiSchemas['FeedbackReport']
+export type CriterionFeedback = ApiSchemas['CriterionFeedback']
+export type SpeakingMetric = ApiSchemas['SpeakingMetric']
 
 export interface ChatMessage {
   role: 'user' | 'assistant'

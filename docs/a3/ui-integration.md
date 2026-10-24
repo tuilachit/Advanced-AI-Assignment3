@@ -1,7 +1,11 @@
 # Assignment 3: Interview UI integration
 
-The next checkpoint prepares the UI for real voice without enabling audio:
-[Real Voice Integration preparation](voice-ui-preparation.md).
+The latest checkpoint connects Sunny's merged Feedback API:
+[Phase 2B: Real Feedback UI integration](real-feedback-ui-integration.md).
+The preceding checkpoint connects Luke's merged controller:
+[Phase 2A: Real Voice UI integration](real-voice-ui-integration.md).
+The earlier [Voice UI preparation](voice-ui-preparation.md) remains a historical
+record of the work before that dependency was merged.
 
 For the current review across all three phases, see
 [integration readiness](integration-readiness.md) and the

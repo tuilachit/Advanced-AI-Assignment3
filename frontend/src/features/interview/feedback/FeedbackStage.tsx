@@ -15,10 +15,11 @@ export interface FeedbackStageProps {
   backLabel?: string
   onSetup?: () => void
   onViewSample?: () => void
+  visible?: boolean
 }
 
-export function FeedbackStage({ interview, source, onBack, backLabel = 'Back to interview', onSetup, onViewSample }: FeedbackStageProps) {
-  const { state, retry } = useFeedback(interview, source)
+export function FeedbackStage({ interview, source, onBack, backLabel = 'Back to interview', onSetup, onViewSample, visible = true }: FeedbackStageProps) {
+  const { state, retry, generate } = useFeedback(interview, source, visible)
   const [selection, setSelection] = useState<{ turnId: string } | null>(null)
   const completed = interview.phase === 'completed'
   const report = completed && source && state.status === 'ready' ? state.report : null
@@ -37,16 +38,28 @@ export function FeedbackStage({ interview, source, onBack, backLabel = 'Back to 
       <p>{interview.phase === 'finalizing' ? 'The transcript is still finishing. Return to the interview room and wait for completion.'
         : 'This interview has not completed. No assessment has been requested.'}</p></div>
       : !source ? <div className="feedback-state-card" role="status"><h3>Feedback is not connected yet</h3>
-        <p>Your interview summary is available above. Automated feedback will be available when the feedback service is connected.</p>
+        <p>This simulated summary is not sent to the feedback service. You can review a separate synthetic example below.</p>
         {onViewSample ? <><p>You can explore a separate example report to see the feedback layout.</p>
           <button type="button" className="primary-button" onClick={onViewSample}>View sample feedback</button></> : null}</div>
-      : state.status === 'loading' ? <div className="feedback-state-card" role="status" aria-live="polite" aria-busy="true">
-        <span className="feedback-loading-mark" aria-hidden="true" /><h3>{source.kind === 'sample' ? 'Loading sample feedback…' : 'Preparing your feedback…'}</h3>
-        <p>{source.kind === 'sample' ? 'Loading the example’s criteria, transcript evidence and speaking metrics.' : 'Checking each answer and its supporting transcript evidence. This may take a moment.'}</p></div>
+      : state.status === 'loading' || state.status === 'generating' ? <div className="feedback-state-card" role="status" aria-live="polite" aria-busy="true">
+        <span className="feedback-loading-mark" aria-hidden="true" /><h3>{source.kind === 'sample' ? 'Loading sample feedback…'
+          : state.status === 'generating' ? 'Generating your feedback…' : 'Checking feedback status…'}</h3>
+        <p>{source.kind === 'sample' ? 'Loading the example’s criteria, transcript evidence and speaking metrics.'
+          : state.status === 'generating' ? 'Evaluating the final submitted answers and their supporting evidence. This may take a moment. You can leave this screen and return to check progress.'
+            : 'Looking for feedback for this completed interview.'}</p></div>
+      : state.status === 'not_requested' ? <div className="feedback-state-card" role="status"><h3>Your interview is ready for feedback</h3>
+        <p>Generate question-by-question feedback from the final transcript saved for this interview. Missing answers or unavailable measurements will remain unassessed.</p>
+        <button type="button" className="primary-button" onClick={() => void generate()}>Generate feedback</button></div>
+      : state.status === 'failed' ? <div className="feedback-state-card feedback-load-error" role="alert"><h3>Feedback generation failed</h3><p>{state.message}</p>
+        {state.retryable ? <button type="button" className="primary-button" onClick={() => void generate()}>Retry generation</button> : null}</div>
       : state.status === 'error' ? <div className="feedback-state-card feedback-load-error" role="alert"><h3>Feedback could not be displayed</h3><p>{state.message}</p>
-        <button type="button" className="primary-button" onClick={() => void retry()}>Retry feedback</button></div> : null}
+        {state.retryable ? <button type="button" className="primary-button" onClick={() => void retry()}>Retry feedback</button> : null}</div> : null}
+
+    {source?.kind === 'service' && onViewSample ? <p className="feedback-help">Explore the layout with a separate fictional interview.{' '}
+      <button type="button" className="interview-text-button" onClick={onViewSample}>View sample feedback</button></p> : null}
 
     {report ? <>
+      {source?.kind === 'service' ? <p role="status" className="feedback-help"><strong>Feedback ready</strong> · Based on final transcript revision {report.transcriptRevision}.</p> : null}
       <section className="feedback-review-heading" aria-labelledby="feedback-answers-title"><div><p className="eyebrow">One answer at a time</p>
         <h3 id="feedback-answers-title">Question-by-question feedback</h3><p>Scores describe individual criteria on a 0–4 scale. STAR covers Situation, Task, Action and Result as one criterion.</p></div>
         <details className="feedback-rubric"><summary>How to read the scores</summary><ol start={0}>{scoreAnchors.map((anchor, index) => <li key={anchor}><strong>{index}</strong><span>{anchor}</span></li>)}</ol>

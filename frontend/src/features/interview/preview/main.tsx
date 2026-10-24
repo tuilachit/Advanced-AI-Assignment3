@@ -17,7 +17,7 @@ function LivePreview() {
       <a className="interview-text-button" href="/" style={{ marginLeft: 'auto' }}>Return to CV Builder</a></header>
     <main className="main-content">{feedbackOpen ? <><div className="live-preview-label" role="note"><strong>UI preview · simulated interview summary</strong>
       <span>This summary comes from the scripted preview. No real audio was recorded.</span></div>
-      <InterviewFeedback interview={interview}
+      <InterviewFeedback interview={interview} source={null}
         onBack={() => setFeedbackOpen(false)} onSetup={() => { window.location.href = '/' }} /></>
       : <LiveInterviewStage interview={interview} integration={controller.integration}
         preview onClose={() => { window.location.href = '/' }}

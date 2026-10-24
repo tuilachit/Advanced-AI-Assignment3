@@ -4,6 +4,9 @@ import type {
   CVGenerationResponse,
   CreateInterviewRequest,
   FactInput,
+  FeedbackRequest,
+  FeedbackResponse,
+  FeedbackStartResponse,
   Interview,
   MessageResponse,
   ResumeEntryEdit,
@@ -38,6 +41,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getFeedback: (sessionId: string, interviewId: string, signal: AbortSignal) =>
+    request<FeedbackResponse>('/sessions/' + encodeURIComponent(sessionId) + '/interviews/' + encodeURIComponent(interviewId) + '/feedback', {
+      cache: 'no-store', signal,
+    }),
+  generateFeedback: (sessionId: string, interviewId: string, body: FeedbackRequest, signal: AbortSignal) =>
+    request<FeedbackStartResponse>('/sessions/' + encodeURIComponent(sessionId) + '/interviews/' + encodeURIComponent(interviewId) + '/feedback', {
+      method: 'POST', body: JSON.stringify(body), signal,
+    }),
   getInterview: (sessionId: string, interviewId: string) =>
     request<Interview>('/sessions/' + encodeURIComponent(sessionId) + '/interviews/' + encodeURIComponent(interviewId), {
       cache: 'no-store',

@@ -5,7 +5,7 @@ import { FeedbackStage } from './FeedbackStage'
 import { InterviewFeedback } from './InterviewFeedback'
 import { SpeakingMetrics } from './SpeakingMetrics'
 import { createSampleFeedback } from './sampleFeedback'
-import { evidenceTurn, type FeedbackSource, type FeedbackView } from './feedbackView'
+import { evidenceTurn, type SampleFeedbackSource as FeedbackSource, type FeedbackView } from './feedbackView'
 
 function readySource(report: FeedbackView): FeedbackSource {
   return { kind: 'sample', load: vi.fn(async () => structuredClone(report)) }
@@ -157,7 +157,7 @@ describe('feedback screen', () => {
   it('separates the real completion summary from the explicitly selected sample', async () => {
     const sample = createSampleFeedback()
     const real = { ...sample.interview, interview_id: 'actual-interview', job: { ...sample.interview.job, title: 'Your actual target role' } }
-    render(<InterviewFeedback interview={real} onBack={vi.fn()} onSetup={vi.fn()} />)
+    render(<InterviewFeedback interview={real} source={null} onBack={vi.fn()} onSetup={vi.fn()} />)
     expect(screen.getByRole('heading', { name: 'Your actual target role' })).toBeVisible()
     expect(screen.queryByText('Sample feedback · mock data')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'View sample feedback' }))

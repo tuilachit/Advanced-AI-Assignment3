@@ -31,7 +31,7 @@ export function LiveInterviewStage({ interview: initial, visible = true, integra
   }, [terminal])
   const seconds = remainingSeconds(interview, now)
   const expired = interview.started_at !== null && seconds === 0 && !terminal
-  const finalizing = interview.phase === 'finalizing' || expired
+  const finalizing = !terminal && (interview.phase === 'finalizing' || expired || live.pending === 'finish')
   const connected = connection === 'connected'
   const pending = live.pending !== null
   const canTalk = connected && interview.phase === 'active' && !pending && !finalizing
@@ -78,7 +78,7 @@ export function LiveInterviewStage({ interview: initial, visible = true, integra
           <p role="status">{question?.text ?? (terminal ? 'No question was issued in this interview.' : 'Start your interview to hear the first question.')}</p>
         </section>
 
-        {!live.controller ? <p className="interview-notice">Live voice is not available in this version yet. {interview.started_at
+        {!live.controller && !live.checking ? <p className="interview-notice">Live voice is not available for this interview. {interview.started_at
           ? 'Your interview keeps its server time limit. Your microphone is off.'
           : 'Your prepared interview is kept; the microphone and timer stay off until voice is connected.'}</p> : null}
         {live.checking ? <p role="status">Checking your interview…</p> : null}

@@ -1,5 +1,9 @@
 # Real Voice Integration preparation — 23 October 2026
 
+This is the pre-merge preparation checkpoint. For the subsequent controller
+binding and current validation, see
+[Phase 2A: Real Voice UI integration](real-voice-ui-integration.md).
+
 ## Scope and dependency
 
 This checkpoint builds on UI commit `51eb2bf` on

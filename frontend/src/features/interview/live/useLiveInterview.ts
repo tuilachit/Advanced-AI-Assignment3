@@ -69,6 +69,9 @@ export function useLiveInterview(initial: Interview, integration: VoiceIntegrati
       if (event.type === 'question' || (event.type === 'connection' && event.status === 'connected')) void refresh()
     })
     void refresh()
+    // Luke's controller polls for voice lifecycle changes but does not publish
+    // full active/finalizing snapshots. Keep this read-only poll for the timer,
+    // saved transcript and question progress. Only his controller performs POSTs.
     const poll = window.setInterval(() => {
       const latest = current.current
       if (['active', 'finalizing'].includes(latest.interview.phase) ||
@@ -125,11 +128,17 @@ export function useLiveInterview(initial: Interview, integration: VoiceIntegrati
       }
     } catch {
       if (identity === command.current) {
+        // A rejected finish leaves Luke's controller in its draining state.
+        // Release it through the public API so an explicit reconnect can recover.
+        if (name === 'finish') controller.disconnect()
         if (name === 'connect' && current.current.connection === 'connecting') {
           dispatch({ type: 'connection', status: 'failed' })
         }
         dispatch({ type: 'command-error',
           message: 'That action could not be completed. Your transcript is kept here; check the connection and try again.' })
+        // Start/end may already have reached the server before a later step
+        // failed. Reload its phase and deadline without repeating any action.
+        await refreshRef.current()
       }
     } finally {
       if (identity === command.current) { locked.current = false; setPending(null) }

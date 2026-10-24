@@ -134,6 +134,8 @@ test('main application keeps completed interview context separate from sample fe
       interview = { ...interview, phase: 'completed', flow_revision: 2, started_at: '2026-10-23T01:00:00Z',
         ended_at: '2026-10-23T01:01:00Z', end_reason: 'user_finished' }
       await route.fulfill({ json: interview })
+    } else if (path.endsWith('/feedback') && request.method() === 'GET') {
+      await route.fulfill({ json: { feedback_status: 'not_requested', report: null, error: null } })
     } else { unexpected.push(request.method() + ' ' + path); await route.abort() }
   })
   await page.goto('/')
