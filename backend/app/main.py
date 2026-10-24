@@ -14,6 +14,7 @@ from pydantic import Field, field_validator
 
 from app.api.interview_feedback import build_feedback_router
 from app.api.interviews import build_interview_router, register_interview_error_handlers
+from app.api.realtime import build_realtime_router
 from app.domain.api_errors import ApiErrorBody, ApiErrorDetail
 from app.domain.models import (
     AgentObservation,
@@ -42,6 +43,11 @@ from app.providers.interview_feedback import (
 )
 from app.providers.openai_interview_planner import OpenAIQuestionPlanner, interview_model
 from app.providers.openai_provider import OpenAIEmbeddingProvider, OpenAIModelProvider
+from app.providers.realtime import (
+    MissingRealtimeProvider,
+    OpenAIRealtimeProvider,
+    RealtimeProvider,
+)
 from app.providers.unavailable import MissingOpenAIProvider
 from app.services.agent import AgentService, AgentStepLimitError
 from app.services.cv import CVEvidenceError, CVService
@@ -221,10 +227,35 @@ class _InterviewServiceProxy:
         return getattr(self._app.state.services.interviews, name)
 
 
+class _RealtimeProviderProxy:
+    """Resolve the provider owned by the current application lifespan."""
+
+    def __init__(self, app: FastAPI) -> None:
+        self._app = app
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._app.state.realtime_provider, name)
+
+
+def build_realtime_provider(settings: Settings, *, client: Any | None = None) -> RealtimeProvider:
+    if not settings.openai_api_key:
+        return MissingRealtimeProvider()
+    return OpenAIRealtimeProvider(
+        api_key=settings.openai_api_key,
+        model=settings.openai_realtime_model,
+        transcription_model=settings.openai_transcription_model,
+        voice=settings.openai_voice,
+        speed=settings.openai_voice_speed,
+        noise_reduction=settings.openai_input_noise_reduction,
+        client=client,
+    )
+
+
 def create_app(
     services: ApplicationServices | None = None,
     *,
     feedback_service: InterviewFeedbackService | None = None,
+    realtime_provider: RealtimeProvider | None = None,
 ) -> FastAPI:
     # Offline construction makes imports and OpenAPI export independent of credentials.
     active = services or build_default_services(Settings())
@@ -242,6 +273,11 @@ def create_app(
                     client = OpenAI(api_key=selected.openai_api_key, timeout=30.0, max_retries=0)
                 active = build_default_services(selected, client=client)
             application.state.services = active
+            application.state.realtime_provider = (
+                realtime_provider
+                if realtime_provider is not None
+                else build_realtime_provider(selected, client=client)
+            )
             if feedback_service is None:
                 runner = FeedbackRuntime()
                 provider = (
@@ -268,6 +304,7 @@ def create_app(
     )
     app.state.services = active
     app.state.feedback_service = feedback
+    app.state.realtime_provider = realtime_provider or MissingRealtimeProvider()
 
     def get_feedback_service() -> InterviewFeedbackService:
         if app.state.feedback_service is None:
@@ -290,6 +327,12 @@ def create_app(
     )
     app.include_router(build_interview_router(interview_flow))
     app.include_router(build_feedback_router(get_feedback_service))
+    app.include_router(
+        build_realtime_router(
+            interview_flow,
+            cast(RealtimeProvider, _RealtimeProviderProxy(app)),
+        )
+    )
 
     @app.exception_handler(SessionNotFoundError)
     async def session_not_found(_request: Request, _error: SessionNotFoundError) -> JSONResponse:

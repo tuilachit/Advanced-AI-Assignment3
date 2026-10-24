@@ -1449,6 +1449,36 @@
         "title": "QuestionFeedback",
         "type": "object"
       },
+      "RealtimeCredential": {
+        "additionalProperties": false,
+        "properties": {
+          "client_secret": {
+            "minLength": 1,
+            "title": "Client Secret",
+            "type": "string"
+          },
+          "connection_id": {
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_secret",
+          "expires_at",
+          "connection_id",
+          "model"
+        ],
+        "title": "RealtimeCredential",
+        "type": "object"
+      },
       "ResumeEntry": {
         "additionalProperties": false,
         "properties": {
@@ -3664,6 +3694,97 @@
         "summary": "Next Step",
         "tags": [
           "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/realtime-token": {
+      "post": {
+        "operationId": "token_api_sessions__session_id__interviews__interview_id__realtime_token_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeCredential"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Token",
+        "tags": [
+          "voice"
         ]
       }
     },

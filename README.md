@@ -1,6 +1,6 @@
 # Advanced AI Assignment 3 — Evidence CV
 
-This is the team repository for UTS 43007 Assignment 3: Multimodal Enhancement of the CV Builder System. Its initial commit imports Luke Nguyen's Assignment 1 CV Builder as the starting point. Multimodal features have not been implemented in this baseline.
+This is the team repository for UTS 43007 Assignment 3: Multimodal Enhancement of the CV Builder System. Its initial commit imports Luke Nguyen's Assignment 1 CV Builder as the starting point. It now includes Tien's interview flow, Luke's native-voice integration/workbench and Sunny's feedback API. Mio's final interview UI integration remains separate team work.
 
 The imported source is based on local commit `14f26eff4423bc89f947e975d6ff71cbb2c7af74`, together with the subsequent CV-tailoring and PDF-presentation fixes present in the working directory. Existing test results, prompts and output examples under `docs/` and `output/` describe Assignment 1; record new Assignment 3 work and each team member's contributions separately.
 
@@ -68,6 +68,24 @@ npm --prefix frontend run dev
 
 Open <http://localhost:5173>.
 
+## Assignment 3 voice workbench
+
+After installing the dependencies above, run the separate loopback-only development API:
+
+```bash
+.venv/bin/python scripts/voice_dev_server.py --env-file .env.local
+```
+
+With the frontend running, open <http://127.0.0.1:5173/voice-dev.html>. Agree to audio/transcript
+use, prepare the synthetic demo, then start voice. The development API uses port 8010; it does
+not replace the normal CV API on port 8000. Native conversation uses `gpt-realtime-2` with a
+separate configurable transcription model. Live voice can incur API charges.
+
+The state-driven orb and transcript are a workbench only, not Mio's final UI. Permanent keys
+stay on the backend; the browser receives only a short-lived connection credential. See
+[voice setup, settings and Mio's adapter interface](docs/a3/voice-integration.md) and
+[actual live checks and limitations](docs/evidence/a3_voice/2026-10-22-transcription-refinement.md).
+
 ## User workflow
 
 1. Introduce yourself and review the draft facts with their source references.
@@ -82,11 +100,16 @@ Editing a confirmed profile invalidates its retrieval results, selected job, CV 
 
 ## Quality checks
 
+GitHub Actions runs offline backend and frontend checks on pull requests and pushes to `main`.
+It uses fake providers, a blank API-key environment and no repository secrets. Hosted checks
+cover tests, lint, types, API contract drift, production build and browser workflows; they do
+not establish live microphone quality or real-provider acceptance.
+
 ```bash
 source .venv/bin/activate
 pytest backend/tests
 ruff check backend
-mypy backend/app
+mypy --config-file backend/pyproject.toml backend/app
 npm --prefix frontend run lint
 npm --prefix frontend run typecheck
 npm --prefix frontend run contract:check

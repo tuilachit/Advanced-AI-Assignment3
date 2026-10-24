@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
+from threading import Barrier
 from typing import Any
 from uuid import uuid4
 
@@ -34,7 +36,11 @@ from app.providers.base import ProviderTurn
 from app.providers.fake import ScriptedProvider
 from app.providers.openai_interview_planner import OpenAIQuestionPlanner, interview_model
 from app.services.cv import CVService
-from app.services.interview_flow import InterviewFlowService, follow_up_problem
+from app.services.interview_flow import (
+    InterviewConflictError,
+    InterviewFlowService,
+    follow_up_problem,
+)
 from app.services.question_planner import (
     TemplateQuestionPlanner,
     job_requirements,
@@ -170,6 +176,49 @@ def ready_session(client: TestClient, approve: bool = True) -> str:
             response = client.post(f"{base}/resume-entries/{entry['entry_id']}/approve")
             assert response.status_code == 200
     return base
+
+
+def test_request_id_cannot_replay_end_as_cancel() -> None:
+    client, _services = build()
+    base = ready_session(client)
+    interview = make_interview(client, base)
+    started = start(client, base, interview)["interview"]
+    url = f"{base}/interviews/{interview['interview_id']}"
+    request = {"request_id": "same-control", "expected_flow_revision": started["flow_revision"]}
+    assert client.post(f"{url}/end", json=request).status_code == 200
+    response = client.post(f"{url}/cancel", json=request)
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "request_id_conflict"
+
+
+def test_concurrent_create_rejects_conflicting_request_id() -> None:
+    from app.domain.interview_models import CreateInterviewRequest
+
+    barrier = Barrier(2)
+
+    class ConcurrentPlanner(TemplateQuestionPlanner):
+        def plan_questions(
+            self, context: InterviewContextSnapshot, *, problems: list[str] | None = None
+        ) -> list[PlannedQuestion]:
+            barrier.wait(timeout=5)
+            return super().plan_questions(context, problems=problems)
+
+    client, services = build(planner=ConcurrentPlanner())
+    session_id = ready_session(client).split("/")[-1]
+
+    def create(minutes: int) -> Any:
+        body = create_body(request_id="same-create")
+        body["config"]["duration_minutes"] = minutes
+        try:
+            return services.interviews.create(
+                session_id, CreateInterviewRequest.model_validate(body)
+            )
+        except InterviewConflictError as error:
+            return error.code
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(create, [5, 10]))
+    assert sum(result == "request_id_conflict" for result in results) == 1
 
 
 def create_body(**overrides: Any) -> dict[str, Any]:
