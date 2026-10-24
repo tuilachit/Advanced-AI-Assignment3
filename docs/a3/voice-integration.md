@@ -2,7 +2,8 @@
 
 This branch builds on Tien's PR #1 at `663ad542b92c79d1a5b66eedffe4b219c5b68d70`.
 It adds the native audio adapter and a development workbench. It does not implement Sunny's
-feedback service or replace Mio's interview screens. No deployment is required.
+feedback service or replace Mio's interview screens. Sunny's feedback API is now integrated
+alongside voice in the normal application. No deployment is required.
 
 ## Design and implementation sequence
 
@@ -182,6 +183,19 @@ backend reaches a terminal state. A finalizing end response is not reported as c
 Same-page reconnect keeps existing transcript rows. Consumers mounting a fresh UI should load
 saved turns from the interview GET response; the adapter does not add cross-reload session
 discovery or seamless provider-context restoration.
+
+## Feedback integration and startup ownership (24 October)
+
+The normal application creates configured providers during FastAPI startup, not during imports
+or OpenAPI export. Interview and realtime-token routes resolve the same live interview flow;
+feedback uses that flow too. The native-voice provider shares the application-owned SDK client,
+which is closed after feedback workers drain. Injected test services remain credential-free.
+Callers injecting services must explicitly inject a configured realtime provider when needed.
+
+The voice-only workbench does this explicitly. Its template planner and synthetic context are
+unchanged, and it is still not an end-to-end generated-feedback demo. Use the normal API for
+Sunny's feedback endpoints and Mio's eventual integrated UI. See
+`../evidence/a3_voice/2026-10-24-integration-checks.md` for the reproduced startup failure.
 
 ## Sources
 

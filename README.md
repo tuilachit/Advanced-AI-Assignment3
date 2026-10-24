@@ -1,6 +1,6 @@
 # Advanced AI Assignment 3 — Evidence CV
 
-This is the team repository for UTS 43007 Assignment 3: Multimodal Enhancement of the CV Builder System. Its initial commit imports Luke Nguyen's Assignment 1 CV Builder as the starting point. It now includes Tien's interview flow and Luke's local native-voice integration/workbench. Final interview UI integration and feedback remain separate team work.
+This is the team repository for UTS 43007 Assignment 3: Multimodal Enhancement of the CV Builder System. Its initial commit imports Luke Nguyen's Assignment 1 CV Builder as the starting point. It now includes Tien's interview flow, Luke's native-voice integration/workbench and Sunny's feedback API. Mio's final interview UI integration remains separate team work.
 
 The imported source is based on local commit `14f26eff4423bc89f947e975d6ff71cbb2c7af74`, together with the subsequent CV-tailoring and PDF-presentation fixes present in the working directory. Existing test results, prompts and output examples under `docs/` and `output/` describe Assignment 1; record new Assignment 3 work and each team member's contributions separately.
 
@@ -99,6 +99,11 @@ stay on the backend; the browser receives only a short-lived connection credenti
 Editing a confirmed profile invalidates its retrieval results, selected job, CV and validation so stale evidence cannot be exported.
 
 ## Quality checks
+
+GitHub Actions runs offline backend and frontend checks on pull requests and pushes to `main`.
+It uses fake providers, a blank API-key environment and no repository secrets. Hosted checks
+cover tests, lint, types, API contract drift, production build and browser workflows; they do
+not establish live microphone quality or real-provider acceptance.
 
 ```bash
 source .venv/bin/activate

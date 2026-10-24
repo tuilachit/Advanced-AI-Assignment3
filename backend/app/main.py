@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from openai import OpenAI
 from pydantic import Field, field_validator
 
+from app.api.interview_feedback import build_feedback_router
 from app.api.interviews import build_interview_router, register_interview_error_handlers
 from app.api.realtime import build_realtime_router
+from app.domain.api_errors import ApiErrorBody, ApiErrorDetail
 from app.domain.models import (
     AgentObservation,
     CVDocument,
@@ -32,6 +37,10 @@ from app.providers.base import (
     AgentModelProvider,
     ProviderError,
 )
+from app.providers.interview_feedback import (
+    OpenAIInterviewFeedbackProvider,
+    UnavailableInterviewFeedbackProvider,
+)
 from app.providers.openai_interview_planner import OpenAIQuestionPlanner, interview_model
 from app.providers.openai_provider import OpenAIEmbeddingProvider, OpenAIModelProvider
 from app.providers.realtime import (
@@ -42,6 +51,8 @@ from app.providers.realtime import (
 from app.providers.unavailable import MissingOpenAIProvider
 from app.services.agent import AgentService, AgentStepLimitError
 from app.services.cv import CVEvidenceError, CVService
+from app.services.feedback_runtime import FeedbackRuntime
+from app.services.interview_feedback import InterviewFeedbackService
 from app.services.interview_flow import InterviewFlowService
 from app.services.question_planner import (
     QuestionPlanner,
@@ -81,16 +92,6 @@ class MessageResponse(StrictModel):
 
 class TraceResponse(StrictModel):
     events: list[TraceEvent]
-
-
-class ApiErrorDetail(StrictModel):
-    code: str
-    message: str
-    details: dict[str, Any] = Field(default_factory=dict)
-
-
-class ApiErrorBody(StrictModel):
-    error: ApiErrorDetail
 
 
 class CVGenerationResponse(StrictModel):
@@ -165,7 +166,9 @@ class ApplicationServices:
         return {"cv": cv.model_dump(mode="json"), "state": "cv_draft"}
 
 
-def build_default_services(settings: Settings | None = None) -> ApplicationServices:
+def build_default_services(
+    settings: Settings | None = None, *, client: Any | None = None
+) -> ApplicationServices:
     selected = settings or Settings.from_environment()
     workflow = SessionWorkflow()
     jobs = JobRepository.load(JobRepository.default_data_path())
@@ -173,14 +176,17 @@ def build_default_services(settings: Settings | None = None) -> ApplicationServi
         model_provider: Any = OpenAIModelProvider(
             model=selected.openai_model,
             api_key=selected.openai_api_key,
+            client=client,
         )
         embedding_provider: Any = OpenAIEmbeddingProvider(
             model=selected.openai_embedding_model,
             api_key=selected.openai_api_key,
+            client=client,
         )
         question_planner: QuestionPlanner = OpenAIQuestionPlanner(
             model=interview_model(selected.openai_model),
             api_key=selected.openai_api_key,
+            client=client,
         )
     else:
         model_provider = MissingOpenAIProvider()
@@ -204,25 +210,107 @@ def _error_response(
     message: str,
     details: dict[str, Any] | None = None,
 ) -> JSONResponse:
-    body = ApiErrorBody(
-        error=ApiErrorDetail(code=code, message=message, details=details or {})
-    )
+    body = ApiErrorBody(error=ApiErrorDetail(code=code, message=message, details=details or {}))
     return JSONResponse(
         status_code=status_code,
         content=body.model_dump(mode="json"),
     )
 
 
+class _InterviewServiceProxy:
+    """Resolve the application flow after startup without constructing SDK resources."""
+
+    def __init__(self, app: FastAPI) -> None:
+        self._app = app
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._app.state.services.interviews, name)
+
+
+class _RealtimeProviderProxy:
+    """Resolve the provider owned by the current application lifespan."""
+
+    def __init__(self, app: FastAPI) -> None:
+        self._app = app
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._app.state.realtime_provider, name)
+
+
+def build_realtime_provider(settings: Settings, *, client: Any | None = None) -> RealtimeProvider:
+    if not settings.openai_api_key:
+        return MissingRealtimeProvider()
+    return OpenAIRealtimeProvider(
+        api_key=settings.openai_api_key,
+        model=settings.openai_realtime_model,
+        transcription_model=settings.openai_transcription_model,
+        voice=settings.openai_voice,
+        speed=settings.openai_voice_speed,
+        noise_reduction=settings.openai_input_noise_reduction,
+        client=client,
+    )
+
+
 def create_app(
     services: ApplicationServices | None = None,
-    *, realtime_provider: RealtimeProvider | None = None,
+    *,
+    feedback_service: InterviewFeedbackService | None = None,
+    realtime_provider: RealtimeProvider | None = None,
 ) -> FastAPI:
+    # Offline construction makes imports and OpenAPI export independent of credentials.
+    active = services or build_default_services(Settings())
+    feedback = feedback_service
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        nonlocal active, feedback
+        client: Any | None = None
+        runner: FeedbackRuntime | None = None
+        try:
+            selected = Settings() if services is not None else Settings.from_environment()
+            if services is None:
+                if selected.openai_api_key:
+                    client = OpenAI(api_key=selected.openai_api_key, timeout=30.0, max_retries=0)
+                active = build_default_services(selected, client=client)
+            application.state.services = active
+            application.state.realtime_provider = (
+                realtime_provider
+                if realtime_provider is not None
+                else build_realtime_provider(selected, client=client)
+            )
+            if feedback_service is None:
+                runner = FeedbackRuntime()
+                provider = (
+                    OpenAIInterviewFeedbackProvider(model=selected.openai_model, client=client)
+                    if client is not None
+                    else UnavailableInterviewFeedbackProvider()
+                )
+                feedback = InterviewFeedbackService(active.interviews, provider, runner=runner)
+            application.state.feedback_service = feedback
+            yield
+        finally:
+            try:
+                if runner is not None:
+                    runner.shutdown()
+            finally:
+                if client is not None:
+                    client.close()
+
     app = FastAPI(
         title="Evidence CV API",
         version="0.1.0",
         responses=ERROR_RESPONSES,
+        lifespan=lifespan,
     )
-    active = services or build_default_services()
+    app.state.services = active
+    app.state.feedback_service = feedback
+    app.state.realtime_provider = realtime_provider or MissingRealtimeProvider()
+
+    def get_feedback_service() -> InterviewFeedbackService:
+        if app.state.feedback_service is None:
+            raise ProviderError("Feedback runtime has not started.")
+        return cast(InterviewFeedbackService, app.state.feedback_service)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -232,20 +320,19 @@ def create_app(
     )
 
     register_interview_error_handlers(app)
-    app.include_router(build_interview_router(active.interviews))
-    if realtime_provider is None:
-        voice_settings = Settings.from_environment()
-        realtime_provider = (
-            OpenAIRealtimeProvider(
-                api_key=voice_settings.openai_api_key,
-                model=voice_settings.openai_realtime_model,
-                transcription_model=voice_settings.openai_transcription_model,
-                voice=voice_settings.openai_voice,
-                speed=voice_settings.openai_voice_speed,
-                noise_reduction=voice_settings.openai_input_noise_reduction,
-            ) if voice_settings.openai_api_key else MissingRealtimeProvider()
+    interview_flow = (
+        active.interviews
+        if services is not None
+        else cast(InterviewFlowService, _InterviewServiceProxy(app))
+    )
+    app.include_router(build_interview_router(interview_flow))
+    app.include_router(build_feedback_router(get_feedback_service))
+    app.include_router(
+        build_realtime_router(
+            interview_flow,
+            cast(RealtimeProvider, _RealtimeProviderProxy(app)),
         )
-    app.include_router(build_realtime_router(active.interviews, realtime_provider))
+    )
 
     @app.exception_handler(SessionNotFoundError)
     async def session_not_found(_request: Request, _error: SessionNotFoundError) -> JSONResponse:
@@ -266,9 +353,7 @@ def create_app(
         )
 
     @app.exception_handler(InvalidTransitionError)
-    async def invalid_transition(
-        _request: Request, error: InvalidTransitionError
-    ) -> JSONResponse:
+    async def invalid_transition(_request: Request, error: InvalidTransitionError) -> JSONResponse:
         return _error_response(
             status.HTTP_409_CONFLICT,
             "invalid_transition",
@@ -321,16 +406,10 @@ def create_app(
         )
 
     @app.exception_handler(RequestValidationError)
-    async def request_validation(
-        _request: Request, error: RequestValidationError
-    ) -> JSONResponse:
+    async def request_validation(_request: Request, error: RequestValidationError) -> JSONResponse:
         details = {
             "issues": [
-                {
-                    key: issue[key]
-                    for key in ("type", "loc", "msg", "input")
-                    if key in issue
-                }
+                {key: issue[key] for key in ("type", "loc", "msg", "input") if key in issue}
                 for issue in error.errors()
             ]
         }
@@ -380,9 +459,7 @@ def create_app(
         return active.resume_entries.propose(session_id)
 
     @app.put("/api/sessions/{session_id}/resume-entries/{entry_id}", response_model=Session)
-    def update_resume_entry(
-        session_id: str, entry_id: str, request: ResumeEntryEdit
-    ) -> Session:
+    def update_resume_entry(session_id: str, entry_id: str, request: ResumeEntryEdit) -> Session:
         return active.resume_entries.edit(session_id, entry_id, request)
 
     @app.post(
@@ -399,9 +476,7 @@ def create_app(
     def retrieve_jobs(session_id: str) -> Session:
         return active.retrieve_jobs(session_id)
 
-    @app.post(
-        "/api/sessions/{session_id}/jobs/{document_id}/select", response_model=Session
-    )
+    @app.post("/api/sessions/{session_id}/jobs/{document_id}/select", response_model=Session)
     def select_job(session_id: str, document_id: str) -> Session:
         return active.workflow.select_job(session_id, document_id)
 

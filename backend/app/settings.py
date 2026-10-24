@@ -10,7 +10,6 @@ from pydantic import Field
 from app.domain.models import StrictModel
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(PROJECT_ROOT / ".env.local")
 
 
 class Settings(StrictModel):
@@ -25,16 +24,13 @@ class Settings(StrictModel):
 
     @classmethod
     def from_environment(cls) -> Settings:
+        load_dotenv(PROJECT_ROOT / ".env.local")
         return cls(
             openai_api_key=os.getenv("OPENAI_API_KEY") or None,
             openai_model=os.getenv("OPENAI_MODEL", "gpt-5.6-luna"),
-            openai_embedding_model=os.getenv(
-                "OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
-            ),
+            openai_embedding_model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
             openai_realtime_model=os.getenv("OPENAI_REALTIME_MODEL", "gpt-realtime-2"),
-            openai_transcription_model=os.getenv(
-                "OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-transcribe"
-            ),
+            openai_transcription_model=os.getenv("OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-transcribe"),
             openai_voice=os.getenv("OPENAI_VOICE", "marin"),
             openai_voice_speed=os.getenv("OPENAI_VOICE_SPEED", "1.0"),
             openai_input_noise_reduction=os.getenv("OPENAI_INPUT_NOISE_REDUCTION", "far_field"),

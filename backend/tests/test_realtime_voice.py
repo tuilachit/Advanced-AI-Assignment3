@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -42,6 +43,90 @@ class TokenProvider:
         if self.failure:
             raise ProviderUnavailableError("sensitive-upstream-error")
         return {"client_secret": "ephemeral-fixture", "expires_at": 4_000_000_000}
+
+
+def test_production_startup_voice_route_uses_the_live_interview_store(monkeypatch: Any) -> None:
+    from app import main
+    from app.settings import Settings
+
+    provider = TokenProvider()
+    _initial, runtime_services = build()
+    offline_build = main.build_default_services
+    calls = 0
+
+    def build_at_startup(settings: Any = None, *, client: Any = None) -> Any:
+        nonlocal calls
+        calls += 1
+        return offline_build(Settings()) if calls == 1 else runtime_services
+
+    monkeypatch.setattr(main, "build_default_services", build_at_startup)
+    monkeypatch.setattr(main.Settings, "from_environment", lambda: Settings())
+    with TestClient(create_app(realtime_provider=provider)) as client:
+        base = ready_session(client)
+        interview = make_interview(client, base)
+        start(client, base, interview)
+        url = f"{base}/interviews/{interview['interview_id']}"
+        response = client.post(f"{url}/realtime-token")
+        assert response.status_code == 200
+        assert response.json()["model"] == "gpt-realtime-2"
+        assert len(provider.contexts) == 1
+        assert client.get(f"{url}/feedback").json()["feedback_status"] == "not_requested"
+
+
+def test_default_voice_provider_uses_startup_settings_and_shared_client(monkeypatch: Any) -> None:
+    from app import main
+    from app.providers import realtime
+    from app.settings import Settings
+
+    _initial, runtime_services = build()
+    original_build = main.build_default_services
+    payloads: list[dict[str, Any]] = []
+    closed: list[bool] = []
+
+    def issue(**payload: Any) -> Any:
+        payloads.append(payload)
+        return SimpleNamespace(value="ephemeral-fixture", expires_at=4_000_000_000)
+
+    sdk = SimpleNamespace(
+        realtime=SimpleNamespace(client_secrets=SimpleNamespace(create=issue)),
+        close=lambda: closed.append(True),
+    )
+
+    def unexpected_client(**kwargs: Any) -> Any:
+        raise AssertionError("Realtime must reuse the application-owned SDK client")
+
+    monkeypatch.setattr(main, "OpenAI", lambda **kwargs: sdk)
+    monkeypatch.setattr(realtime, "OpenAI", unexpected_client)
+    monkeypatch.setattr(
+        main,
+        "build_default_services",
+        lambda settings=None, client=None: (
+            runtime_services if client is sdk else original_build(Settings())
+        ),
+    )
+    monkeypatch.setattr(
+        main.Settings,
+        "from_environment",
+        lambda: Settings(
+            openai_api_key="fixture-not-a-key",
+            openai_voice="cedar",
+            openai_voice_speed=0.95,
+            openai_input_noise_reduction="near_field",
+        ),
+    )
+    app = create_app()
+    assert payloads == [] and closed == []
+    with TestClient(app) as client:
+        base = ready_session(client)
+        interview = make_interview(client, base)
+        start(client, base, interview)
+        response = client.post(f"{base}/interviews/{interview['interview_id']}/realtime-token")
+        assert response.status_code == 200
+        assert response.json()["model"] == "gpt-realtime-2"
+        assert payloads[0]["session"]["audio"]["output"] == {"voice": "cedar", "speed": 0.95}
+        assert payloads[0]["session"]["audio"]["input"]["noise_reduction"] == {"type": "near_field"}
+        assert closed == []
+    assert closed == [True]
 
 
 def test_voice_token_is_bound_to_active_interview_and_never_stored() -> None:

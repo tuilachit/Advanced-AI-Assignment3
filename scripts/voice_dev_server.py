@@ -26,28 +26,41 @@ def main() -> None:
     import uvicorn
 
     from app.domain.interview_models import CreateInterviewRequest, Interview
-    from app.main import build_default_services, create_app
+    from app.main import build_default_services, build_realtime_provider, create_app
     from app.services.interview_flow import InterviewConflictError, InterviewFlowService
     from app.services.question_planner import TemplateQuestionPlanner
+    from app.settings import Settings
     from interview_flow_tools import load_profiles, prepare_session
 
     services = build_default_services()
     services.interviews = InterviewFlowService(
         services.workflow, services.jobs, TemplateQuestionPlanner()
     )
-    app = create_app(services)
+    app = create_app(
+        services, realtime_provider=build_realtime_provider(Settings.from_environment())
+    )
 
     @app.post("/api/voice-demo", response_model=Interview, status_code=201)
     def demo(consent: InterviewConsent) -> Interview:
         if not (consent.send_audio_to_provider and consent.retain_transcript_for_feedback):
-            raise InterviewConflictError("consent_required", "Agree to audio and transcript use first.")
+            raise InterviewConflictError(
+                "consent_required", "Agree to audio and transcript use first."
+            )
         session_id = prepare_session(services.workflow, load_profiles()[0])
-        return services.interviews.create(session_id, CreateInterviewRequest.model_validate({
-            "request_id": str(uuid4()),
-            "job": {"source": "supplied_job", "document_id": "graduate_ai_engineer"},
-            "config": {"main_question_count": 3},
-            "consent": consent.model_dump(),
-        }))
+        return services.interviews.create(
+            session_id,
+            CreateInterviewRequest.model_validate(
+                {
+                    "request_id": str(uuid4()),
+                    "job": {
+                        "source": "supplied_job",
+                        "document_id": "graduate_ai_engineer",
+                    },
+                    "config": {"main_question_count": 3},
+                    "consent": consent.model_dump(),
+                }
+            ),
+        )
 
     uvicorn.run(app, host="127.0.0.1", port=args.port)
 

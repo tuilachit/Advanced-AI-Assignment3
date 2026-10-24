@@ -76,6 +76,15 @@
         "title": "ApiErrorDetail",
         "type": "object"
       },
+      "Applicability": {
+        "enum": [
+          "assessed",
+          "not_applicable",
+          "insufficient_evidence"
+        ],
+        "title": "Applicability",
+        "type": "string"
+      },
       "AskQuestionStep": {
         "additionalProperties": false,
         "properties": {
@@ -371,6 +380,98 @@
         "title": "CreateInterviewRequest",
         "type": "object"
       },
+      "CriterionFeedback": {
+        "additionalProperties": false,
+        "properties": {
+          "applicability": {
+            "$ref": "#/components/schemas/Applicability"
+          },
+          "criterion": {
+            "$ref": "#/components/schemas/CriterionName"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceQuote"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "explanation": {
+            "maxLength": 1500,
+            "minLength": 1,
+            "title": "Explanation",
+            "type": "string"
+          },
+          "improvement": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Improvement"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "maximum": 4.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "required": [
+          "criterion",
+          "applicability",
+          "score",
+          "explanation",
+          "evidence",
+          "improvement"
+        ],
+        "title": "CriterionFeedback",
+        "type": "object"
+      },
+      "CriterionName": {
+        "enum": [
+          "relevance",
+          "specificity",
+          "structure",
+          "technical_reasoning",
+          "star"
+        ],
+        "title": "CriterionName",
+        "type": "string"
+      },
+      "EvidenceQuote": {
+        "additionalProperties": false,
+        "properties": {
+          "quote": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "turn_id": {
+            "minLength": 1,
+            "title": "Turn Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "turn_id",
+          "quote"
+        ],
+        "title": "EvidenceQuote",
+        "type": "object"
+      },
       "Fact": {
         "additionalProperties": false,
         "properties": {
@@ -465,6 +566,154 @@
         ],
         "title": "FactStatus",
         "type": "string"
+      },
+      "FeedbackReport": {
+        "additionalProperties": false,
+        "properties": {
+          "context_hash": {
+            "minLength": 1,
+            "title": "Context Hash",
+            "type": "string"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "interview_id": {
+            "minLength": 1,
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "question_feedback": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionFeedback"
+            },
+            "title": "Question Feedback",
+            "type": "array"
+          },
+          "report_id": {
+            "minLength": 1,
+            "title": "Report Id",
+            "type": "string"
+          },
+          "rubric_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Rubric Version",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "transcript_revision": {
+            "minimum": 0.0,
+            "title": "Transcript Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "report_id",
+          "interview_id",
+          "context_hash",
+          "transcript_revision",
+          "rubric_version",
+          "generated_at",
+          "question_feedback",
+          "limitations"
+        ],
+        "title": "FeedbackReport",
+        "type": "object"
+      },
+      "FeedbackRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_transcript_revision": {
+            "minimum": 0.0,
+            "title": "Expected Transcript Revision",
+            "type": "integer"
+          },
+          "request_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_transcript_revision"
+        ],
+        "title": "FeedbackRequest",
+        "type": "object"
+      },
+      "FeedbackResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiErrorBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "feedback_status": {
+            "enum": [
+              "not_requested",
+              "generating",
+              "ready",
+              "failed"
+            ],
+            "title": "Feedback Status",
+            "type": "string"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedbackReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "feedback_status",
+          "report",
+          "error"
+        ],
+        "title": "FeedbackResponse",
+        "type": "object"
+      },
+      "FeedbackStartResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "feedback_status": {
+            "const": "generating",
+            "title": "Feedback Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "feedback_status"
+        ],
+        "title": "FeedbackStartResponse",
+        "type": "object"
       },
       "FinishStep": {
         "additionalProperties": false,
@@ -1169,6 +1418,37 @@
         "title": "ProfileUpdateRequest",
         "type": "object"
       },
+      "QuestionFeedback": {
+        "additionalProperties": false,
+        "properties": {
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionFeedback"
+            },
+            "title": "Criteria",
+            "type": "array"
+          },
+          "question_id": {
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "speaking_metrics": {
+            "items": {
+              "$ref": "#/components/schemas/SpeakingMetric"
+            },
+            "title": "Speaking Metrics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "question_id",
+          "criteria",
+          "speaking_metrics"
+        ],
+        "title": "QuestionFeedback",
+        "type": "object"
+      },
       "RealtimeCredential": {
         "additionalProperties": false,
         "properties": {
@@ -1696,6 +1976,82 @@
           "question_id"
         ],
         "title": "SkipQuestionRequest",
+        "type": "object"
+      },
+      "SpeakingMetric": {
+        "additionalProperties": false,
+        "properties": {
+          "method": {
+            "minLength": 1,
+            "title": "Method",
+            "type": "string"
+          },
+          "name": {
+            "enum": [
+              "words_per_minute",
+              "transcript_filler_count",
+              "pause_count"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "not_available"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "turn_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Turn Ids",
+            "type": "array"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          },
+          "unit": {
+            "enum": [
+              "words/min",
+              "count"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "value",
+          "unit",
+          "method",
+          "unavailable_reason",
+          "turn_ids"
+        ],
+        "title": "SpeakingMetric",
         "type": "object"
       },
       "StartInterviewRequest": {
@@ -3039,6 +3395,196 @@
         "summary": "End Interview",
         "tags": [
           "interviews"
+        ]
+      }
+    },
+    "/api/sessions/{session_id}/interviews/{interview_id}/feedback": {
+      "get": {
+        "operationId": "get_feedback_api_sessions__session_id__interviews__interview_id__feedback_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Get Feedback",
+        "tags": [
+          "interview-feedback"
+        ]
+      },
+      "post": {
+        "operationId": "start_feedback_api_sessions__session_id__interviews__interview_id__feedback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackStartResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Session or resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Workflow state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Request or evidence validation error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "Agent step limit reached"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            },
+            "description": "AI provider unavailable"
+          }
+        },
+        "summary": "Start Feedback",
+        "tags": [
+          "interview-feedback"
         ]
       }
     },
