@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fafbfd" />
+    <title>Evidence CV · Voice studio</title>
+    <link rel="stylesheet" href="/src/voice/workbench.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <a class="brand" href="/" aria-label="Evidence CV home"><span class="brand-mark" aria-hidden="true">e.</span> Evidence CV</a>
+      <span class="workbench-tag"><span class="tag-dot" aria-hidden="true"></span>Voice workbench</span>
+    </header>
+    <main>
+      <section class="voice-studio" aria-labelledby="studio-title">
+        <p class="eyebrow">YOUR NEXT CHAPTER, OUT LOUD</p>
+        <h1 id="studio-title">Let’s talk.</h1>
+        <p class="intro">A little practice. Space to think. An interview at your pace.</p>
+        <div id="voice-orb" class="orb-stage" data-state="idle" aria-hidden="true">
+          <div class="orb-halo"></div>
+          <div class="orb-core"><div class="orb-mist"></div><div class="orb-shine"></div></div>
+        </div>
+        <div class="orb-caption" role="status" aria-live="polite" aria-atomic="true">
+          <h2 id="voice-status">A space to find your voice</h2>
+          <p id="voice-hint">Prepare the demo below. Your microphone stays off until you start.</p>
+        </div>
+        <button id="connect" class="start-button" disabled>Start voice interview <span aria-hidden="true">↗</span></button>
+        <div class="call-controls" aria-label="Interview controls">
+          <button id="mute" class="call-button" aria-label="Mute microphone" title="Mute microphone" aria-pressed="false" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>
+          </button>
+          <button id="finish" class="call-button end-call" aria-label="Finish interview" title="Finish interview" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15v-4c5-5 13-5 18 0v4l-5-1v-3a10 10 0 0 0-8 0v3z"/></svg>
+          </button>
+        </div>
+        <div class="secondary-controls">
+          <button id="audio" class="text-button" disabled>Enable audio</button><span aria-hidden="true">·</span>
+          <button id="skip" class="text-button" disabled>Skip question</button>
+        </div>
+        <p id="error" role="alert"></p>
+        <div class="current-question"><span class="eyebrow">CURRENT QUESTION</span><p id="question">Your conversation starts with one question at a time.</p></div>
+      </section>
+      <details class="setup-panel" open>
+        <summary>Set up your practice <span>Synthetic demo</span></summary>
+        <div class="setup-content">
+          <p>This workbench uses Maya’s supplied synthetic profile and an offline question planner. Live voice uses <strong>gpt-realtime-2</strong> and can incur API charges. This is not Mio’s final interview interface.</p>
+          <label class="consent"><input type="checkbox" id="consent" /> <span>I agree to send microphone audio to OpenAI and keep the transcript in this temporary local session for review.</span></label>
+          <button id="prepare" class="prepare-button">Prepare synthetic demo</button>
+          <p id="context">No interview prepared. Nothing is sent until you start.</p>
+        </div>
+      </details>
+      <section class="conversation" aria-labelledby="conversation-title">
+        <div class="section-heading"><h2 id="conversation-title">The conversation</h2><span class="section-note">YOUR WORDS, NOT A REWRITE</span></div>
+        <p id="activity" class="caption-note" role="status">Live captions are provisional; final transcripts replace them.</p>
+        <div id="transcript" aria-label="Interview transcript"></div>
+        <details class="developer-panel"><summary>Developer details</summary><p id="status">Disconnected</p><pre id="state"></pre></details>
+      </section>
+    </main>
+    <footer>Evidence CV <span aria-hidden="true">/</span> A place to practise, not a hiring decision.</footer>
+    <script type="module" src="/src/voice/dev.ts"></script>
+  </body>
+</html>

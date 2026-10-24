@@ -1,0 +1,710 @@
+{
+  "generated_at": "2026-10-22T10:51:31+00:00",
+  "planner": "openai",
+  "config": {
+    "interview_type": "mixed",
+    "main_question_count": 3
+  },
+  "jobs": [
+    "graduate_ai_engineer",
+    "rag_agent_engineer"
+  ],
+  "summary": {
+    "plans": 10,
+    "valid_plans": 10,
+    "questions": 30,
+    "personalised_questions": 27,
+    "questions_with_jd_excerpt": 30,
+    "sensitive_questions": 0,
+    "job_pairs": 5,
+    "job_pairs_with_identical_plans": 0,
+    "mean_identical_questions_per_job_pair": 0.0
+  },
+  "job_pair_overlap": [
+    {
+      "profile": "student_profile_01",
+      "jobs": [
+        "graduate_ai_engineer",
+        "rag_agent_engineer"
+      ],
+      "identical_questions": 0,
+      "token_jaccard": 0.216
+    },
+    {
+      "profile": "student_profile_02",
+      "jobs": [
+        "graduate_ai_engineer",
+        "rag_agent_engineer"
+      ],
+      "identical_questions": 0,
+      "token_jaccard": 0.2
+    },
+    {
+      "profile": "student_profile_03",
+      "jobs": [
+        "graduate_ai_engineer",
+        "rag_agent_engineer"
+      ],
+      "identical_questions": 0,
+      "token_jaccard": 0.25
+    },
+    {
+      "profile": "student_profile_04",
+      "jobs": [
+        "graduate_ai_engineer",
+        "rag_agent_engineer"
+      ],
+      "identical_questions": 0,
+      "token_jaccard": 0.153
+    },
+    {
+      "profile": "student_profile_05",
+      "jobs": [
+        "graduate_ai_engineer",
+        "rag_agent_engineer"
+      ],
+      "identical_questions": 0,
+      "token_jaccard": 0.386
+    }
+  ],
+  "runs": [
+    {
+      "profile": "student_profile_01",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-5e417dc7-4968-451d-8794-e84fda43f197",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about applying your computing science background to a Graduate AI Engineer role supporting practical systems for mineral exploration?",
+          "rationale": "This opening question fits the mixed format and explores motivation while connecting the candidate\u2019s current degree to the role\u2019s applied AI context.",
+          "fact_ids": [
+            "fact-5c583b4c-bfd0-4f17-89db-1085de6bafa5"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-621f5d2c-2961-408a-912b-dda84b8945d2"
+          ],
+          "job_requirement_excerpt": "Support applied AI and machine-learning systems for mineral exploration."
+        },
+        {
+          "question_id": "question-1fd6a214-6e5d-4bb6-8d20-c3029215caa9",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "In your AI Coursework Prototype, how did the tool-call agent decide which local course tool to select, and what would you consider when validating its recorded tool results before producing a response?",
+          "rationale": "This probes the candidate\u2019s directly evidenced agent prototype while targeting the role\u2019s need to develop, validate, and iterate on AI agents.",
+          "fact_ids": [
+            "fact-3a16fd31-0dc4-4406-98aa-76525e4a6745"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-91c72b4f-3fb7-4f5a-96a0-59e94d01b533"
+          ],
+          "job_requirement_excerpt": "Develop and evaluate machine-learning models and AI agents;"
+        },
+        {
+          "question_id": "question-7d5a5175-5729-49ce-b9ca-71dc5769ac9a",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Suppose you were building a Python model using incomplete and noisy exploration data: how would you structure an experiment, choose an evaluation approach, and decide what to change after reviewing the results?",
+          "rationale": "This assesses student-appropriate reasoning about experimentation, validation, and iteration against the job\u2019s real-world data and machine-learning responsibilities without claiming prior experience the candidate has not evidenced.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "Work with senior AI researchers, data engineers, and geoscientists on practical systems using incomplete and noisy real-world data."
+        }
+      ],
+      "personalised": 2,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 1,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_01",
+      "job": "rag_agent_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-54ff3739-4f75-4fec-9baa-f2f87ecdd98a",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about moving from your computing science studies and software engineering projects into an AI Engineer role focused on LLM-powered applications?",
+          "rationale": "This opening question explores the candidate\u2019s motivation and connects their current studies and projects with the role\u2019s AI application focus.",
+          "fact_ids": [
+            "fact-5c583b4c-bfd0-4f17-89db-1085de6bafa5",
+            "fact-3a16fd31-0dc4-4406-98aa-76525e4a6745",
+            "fact-98ee3da4-c02a-43a9-9162-e3dfc54aff2a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-621f5d2c-2961-408a-912b-dda84b8945d2",
+            "resume-entry-91c72b4f-3fb7-4f5a-96a0-59e94d01b533"
+          ],
+          "job_requirement_excerpt": "Develop LLM-powered AI applications"
+        },
+        {
+          "question_id": "question-d82f81ef-fc0c-4ac2-8807-edd4c95dd13b",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Walk me through how your AI Coursework Prototype selects tools and records their results, and explain one design change you would make to improve the reliability or observability of that agent workflow.",
+          "rationale": "This tests agent-workflow reasoning using the candidate\u2019s direct prototype experience and targets an important responsibility of the role.",
+          "fact_ids": [
+            "fact-3a16fd31-0dc4-4406-98aa-76525e4a6745"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-91c72b4f-3fb7-4f5a-96a0-59e94d01b533"
+          ],
+          "job_requirement_excerpt": "design and optimise RAG pipelines and AI-agent workflows"
+        },
+        {
+          "question_id": "question-7ea340d5-602a-405c-b0c6-b15e107126b3",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Suppose you had to extend the Team Course Planner into a knowledge system that answers questions about course information: how would you design a simple RAG pipeline, and how would you evaluate whether its retrieval and answers were working well?",
+          "rationale": "This builds on the candidate\u2019s Python, SQL, REST API and course-information project while assessing foundational RAG design and evaluation skills required for the role.",
+          "fact_ids": [
+            "fact-04e617df-0899-4ff2-9f63-3a6e9ca5dcf1",
+            "fact-f79a2e87-a228-4b8d-aabe-1693a7344672"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-6c68923e-a6e2-437a-94ff-b2173554a63d",
+            "resume-entry-b692bdf8-4d72-43eb-bab9-30422a1052f9"
+          ],
+          "job_requirement_excerpt": "build AI-powered knowledge systems and retrieval solutions"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 1,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_02",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-475aff5e-5016-4d65-bd58-0d5e459be260",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about starting as a Graduate AI Engineer in applied AI for mineral exploration, and how has your Bachelor of Computing Science prepared you for this kind of work?",
+          "rationale": "This opening question assesses motivation and connects the candidate\u2019s current degree to the role\u2019s graduate-level academic requirement.",
+          "fact_ids": [
+            "fact-cb6c670c-b619-491e-b464-571eddd82b93"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-4ba0dbed-aa7e-49c3-be87-d122b216a860"
+          ],
+          "job_requirement_excerpt": "A degree in artificial intelligence, data science, computer science, information technology, or a related science or engineering discipline"
+        },
+        {
+          "question_id": "question-b7d4a5f3-5637-47c2-81cf-1aa155fdbeb0",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about a time during your Coursework Retrieval Assistant project when you found that an answer was uncertain or the retrieved evidence was not sufficient. What did you do, and what did you learn?",
+          "rationale": "This invites a concrete example of inspecting and documenting uncertainty, which is relevant to validating AI outputs when working with incomplete and noisy real-world data.",
+          "fact_ids": [
+            "fact-8b3ac822-7c25-4b95-98d4-145f35ec7a82"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-f5ee7494-4bda-4abb-bff9-c228737f2447"
+          ],
+          "job_requirement_excerpt": "validate outputs; iterate from findings"
+        },
+        {
+          "question_id": "question-10ec3040-9a05-414f-bc49-9fdc773744f5",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Suppose you were comparing two machine-learning models for a mineral-exploration dataset with noisy labels and an uneven class distribution. How would you design the evaluation, choose useful metrics, and decide what to investigate or change next?",
+          "rationale": "This tests practical reasoning about model evaluation, noisy data, metrics, and iterative experimentation at an appropriate student level for the role.",
+          "fact_ids": [
+            "fact-4f298a3b-63c9-448d-855c-a652868bac2e",
+            "fact-1bb2cb3f-2551-4d85-b987-fc90cac291a3"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-62db2a74-f8f3-4f7c-9476-3163908001d5",
+            "resume-entry-0b70e4c4-c31a-4ce5-99e4-95cac3614473"
+          ],
+          "job_requirement_excerpt": "Develop and evaluate machine-learning models and AI agents"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 2,
+        "technical": 1
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_02",
+      "job": "rag_agent_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-88b6d81e-a004-42a5-bf66-1a39f80bdd49",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about developing LLM-powered enterprise applications, and how has your coursework or project work prepared you for an AI Engineer role?",
+          "rationale": "This provides a concise motivation and background opener grounded in the candidate\u2019s computing degree and relevant retrieval project.",
+          "fact_ids": [
+            "fact-cb6c670c-b619-491e-b464-571eddd82b93",
+            "fact-8b3ac822-7c25-4b95-98d4-145f35ec7a82"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-4ba0dbed-aa7e-49c3-be87-d122b216a860",
+            "resume-entry-f5ee7494-4bda-4abb-bff9-c228737f2447"
+          ],
+          "job_requirement_excerpt": "Develop intelligent enterprise applications that combine large language models with scalable data infrastructure."
+        },
+        {
+          "question_id": "question-ce05a6f3-7555-4cae-9256-8c66dc07fa2a",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "In your coursework Retrieval Assistant, how would you design a stronger RAG pipeline for a larger collection of documents, and what trade-offs would you consider when choosing chunking, retrieval, and ranking strategies?",
+          "rationale": "This builds directly on the candidate\u2019s retrieval assistant while testing core RAG design reasoning required for the role.",
+          "fact_ids": [
+            "fact-8b3ac822-7c25-4b95-98d4-145f35ec7a82"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-f5ee7494-4bda-4abb-bff9-c228737f2447"
+          ],
+          "job_requirement_excerpt": "design and optimise RAG pipelines and AI-agent workflows"
+        },
+        {
+          "question_id": "question-334e38c8-4578-4353-b24e-e069d82b0ab9",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "How would you evaluate whether an LLM-powered retrieval system is performing well, using the uncertainty cases you documented and the precision-and-recall comparisons from your classification study?",
+          "rationale": "This assesses practical model and system evaluation skills using the candidate\u2019s documented experience with retrieval evidence, uncertainty, precision, and recall.",
+          "fact_ids": [
+            "fact-8b3ac822-7c25-4b95-98d4-145f35ec7a82",
+            "fact-4f298a3b-63c9-448d-855c-a652868bac2e"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-f5ee7494-4bda-4abb-bff9-c228737f2447",
+            "resume-entry-62db2a74-f8f3-4f7c-9476-3163908001d5"
+          ],
+          "job_requirement_excerpt": "evaluate models and optimise system performance"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 1,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_03",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-e81622b9-9ff5-4de5-b5e7-b5a32833e5bf",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about moving from your Computing Science studies and data-analysis projects toward a Graduate AI Engineer role in mineral exploration?",
+          "rationale": "This opening question explores the candidate\u2019s motivation and connects their current background to the role\u2019s applied AI focus.",
+          "fact_ids": [
+            "fact-544e4689-69fa-45af-9c3c-af876be14472",
+            "fact-c2d89501-6e50-4f8c-b202-72542a15cac6"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-2e80ff1a-0666-4efa-b0a9-92902e985468"
+          ],
+          "job_requirement_excerpt": "Support applied AI and machine-learning systems for mineral exploration."
+        },
+        {
+          "question_id": "question-7940f0f4-5d68-45c6-8f46-deee063a1a2c",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Your Student Services Dashboard involved missing survey responses. If you were evaluating a machine-learning model on similarly incomplete and noisy data, how would you investigate the missingness, choose an evaluation approach, and decide whether the results were reliable?",
+          "rationale": "This tests practical reasoning about data quality and model validation while building directly on the candidate\u2019s experience explaining limitations in survey data.",
+          "fact_ids": [
+            "fact-a5e634ad-2027-4bfa-82fa-29179c8eee8a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-b9178c87-608a-4e9d-ab78-674cbb18f46b"
+          ],
+          "job_requirement_excerpt": "Work with senior AI researchers, data engineers, and geoscientists on practical systems using incomplete and noisy real-world data."
+        },
+        {
+          "question_id": "question-99aeba80-af0a-425e-b5a0-09b762ea018a",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "In your Search Result Analysis project, you examined how terms changed retrieved results; how would you turn that investigation into a small, modular retrieval component, and what experiments would you run to evaluate its outputs?",
+          "rationale": "This assesses student-level understanding of retrieval experimentation and modular AI design using a directly relevant project example.",
+          "fact_ids": [
+            "fact-8bc76ed1-c1e9-4502-a641-78f26df19a0a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-9940504c-30bb-445a-92c0-23d464326111"
+          ],
+          "job_requirement_excerpt": "Develop and evaluate machine-learning models and AI agents; build specialised modular AI components; gather requirements; run experiments; validate outputs; iterate from findings"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 1,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_03",
+      "job": "rag_agent_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-49ad6c21-9708-4fa6-9f24-60523868b2c6",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about developing intelligent enterprise applications, and how does your Computing Science degree or project work prepare you for this role?",
+          "rationale": "This brief opening question explores motivation while connecting the AI Engineer role to the candidate\u2019s confirmed academic and project background.",
+          "fact_ids": [
+            "fact-544e4689-69fa-45af-9c3c-af876be14472",
+            "fact-a5e634ad-2027-4bfa-82fa-29179c8eee8a",
+            "fact-8bc76ed1-c1e9-4502-a641-78f26df19a0a"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-2e80ff1a-0666-4efa-b0a9-92902e985468",
+            "resume-entry-b9178c87-608a-4e9d-ab78-674cbb18f46b",
+            "resume-entry-9940504c-30bb-445a-92c0-23d464326111"
+          ],
+          "job_requirement_excerpt": "Develop intelligent enterprise applications that combine large language models with scalable data infrastructure."
+        },
+        {
+          "question_id": "question-047f35ef-36c9-4223-8565-ab78c54dcf2d",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Suppose you were designing a retrieval-augmented generation pipeline for an enterprise knowledge system. How would you prepare and chunk documents, retrieve relevant context, reduce unsupported answers, and evaluate whether the system was working well?",
+          "rationale": "This tests core RAG design and evaluation reasoning that directly matches the role, without assuming the candidate has prior LLM engineering experience.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "design and optimise RAG pipelines and AI-agent workflows"
+        },
+        {
+          "question_id": "question-632d784f-c584-4b82-81c6-ba522167f031",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Your Search Result Analysis compared retrieved job descriptions and examined which terms changed the results; how would you extend that work to diagnose poor retrieval quality in a production knowledge system, and what Python-based measurements or experiments would you use?",
+          "rationale": "This builds on the candidate\u2019s confirmed retrieval-analysis project while assessing practical debugging, evaluation, and Python reasoning relevant to AI-powered retrieval solutions.",
+          "fact_ids": [
+            "fact-8bc76ed1-c1e9-4502-a641-78f26df19a0a",
+            "fact-92898a3d-943e-46c4-8c60-dae21a9e84fd"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-9940504c-30bb-445a-92c0-23d464326111",
+            "resume-entry-d340851d-5efa-48ff-9c9e-5cfd422d6649"
+          ],
+          "job_requirement_excerpt": "evaluate models and optimise system performance"
+        }
+      ],
+      "personalised": 2,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 1,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_04",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-41289c6e-24e5-48b9-8182-8611aeedbf07",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about applying your computing science background to a Graduate AI Engineer role supporting practical systems for mineral exploration?",
+          "rationale": "This opening question explores motivation while connecting the candidate\u2019s current degree to the role\u2019s applied AI context.",
+          "fact_ids": [
+            "fact-8c34d6cb-44fe-4e80-982a-fa60c5393115"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-b8654eaa-4c89-4ba9-9b1f-06dbfdfedbf6"
+          ],
+          "job_requirement_excerpt": "Support applied AI and machine-learning systems for mineral exploration."
+        },
+        {
+          "question_id": "question-6c6e6e48-ed0d-492c-93af-91fd69812303",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Suppose you receive a mineral-exploration dataset with missing values, noisy measurements, and a mixture of numerical and categorical fields. How would you explore, clean, split, and evaluate the data before choosing and comparing a machine-learning model?",
+          "rationale": "This tests practical reasoning about incomplete and noisy data, data analysis, experiments, and model evaluation at a suitable graduate level.",
+          "fact_ids": [
+            "fact-8c34d6cb-44fe-4e80-982a-fa60c5393115"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-b8654eaa-4c89-4ba9-9b1f-06dbfdfedbf6"
+          ],
+          "job_requirement_excerpt": "Work with senior AI researchers, data engineers, and geoscientists on practical systems using incomplete and noisy real-world data."
+        },
+        {
+          "question_id": "question-41c086b3-4b75-422a-bd06-958c2e7db021",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about a time you improved the reliability of a software project, such as through input validation, error logging, testing, or reviewing changes with teammates. What did you do and what was the outcome?",
+          "rationale": "The Reliable Course Service provides concrete evidence for assessing software-development practice, maintainability, testing, and collaborative work relevant to shared AI codebases.",
+          "fact_ids": [
+            "fact-4409a730-9165-4946-b12c-288741a4dca6"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-8ce090ab-1fc8-42f4-8a3f-08d8e04c0bb6"
+          ],
+          "job_requirement_excerpt": "write clean, maintainable Python; and contribute to shared codebases."
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 2,
+        "technical": 1
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_04",
+      "job": "rag_agent_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-dcf06845-5d46-43f9-a81b-065e3873bb3e",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about developing LLM-powered enterprise applications as a third-year Computing Science student, and how does your experience so far prepare you to contribute to this kind of role?",
+          "rationale": "This opening motivation question is appropriate for a student candidate and connects their current degree and practical experience to the AI Engineer role without assuming prior LLM experience.",
+          "fact_ids": [
+            "fact-8c34d6cb-44fe-4e80-982a-fa60c5393115",
+            "fact-d3b48693-fed0-41f7-835b-fb065906711f",
+            "fact-4409a730-9165-4946-b12c-288741a4dca6"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-b8654eaa-4c89-4ba9-9b1f-06dbfdfedbf6",
+            "resume-entry-1f3a9434-70e9-40d0-8ca1-e09295e30fea",
+            "resume-entry-8ce090ab-1fc8-42f4-8a3f-08d8e04c0bb6"
+          ],
+          "job_requirement_excerpt": "Develop LLM-powered AI applications"
+        },
+        {
+          "question_id": "question-ab486116-832d-49e4-ac25-ca47c2a17f92",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "How would you design a basic RAG pipeline for an enterprise knowledge system, including document preparation, retrieval, prompt construction, and an evaluation approach?",
+          "rationale": "This tests foundational reasoning about a central responsibility of the role at a level suitable for a student, without requiring the candidate to claim experience with RAG tools.",
+          "fact_ids": [],
+          "resume_entry_ids": [],
+          "job_requirement_excerpt": "design and optimise RAG pipelines and AI-agent workflows"
+        },
+        {
+          "question_id": "question-2d9bc3e1-bd22-46ac-a3f0-3dc6d89d769b",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Suppose your Python REST service runs in a Docker container and users report occasional incorrect or failed responses; how would you debug the issue, improve its reliability, and prepare it for collaboration with software engineers?",
+          "rationale": "This practical scenario builds directly on the candidate\u2019s Python, REST API testing, error logging, Docker, and team review experience while assessing debugging and production-readiness thinking.",
+          "fact_ids": [
+            "fact-d3b48693-fed0-41f7-835b-fb065906711f",
+            "fact-4409a730-9165-4946-b12c-288741a4dca6"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1f3a9434-70e9-40d0-8ca1-e09295e30fea",
+            "resume-entry-8ce090ab-1fc8-42f4-8a3f-08d8e04c0bb6"
+          ],
+          "job_requirement_excerpt": "collaborate with software engineers to deploy production-ready applications"
+        }
+      ],
+      "personalised": 2,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 1,
+        "technical": 2
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_05",
+      "job": "graduate_ai_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-8ba937b6-77d5-464b-b172-4bc964dd4e90",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What has motivated you to apply for a Graduate AI Engineer role in mineral exploration, and how has your Bachelor of Computing Science and Tool-Call Agent Prototype prepared you for it?",
+          "rationale": "This opening question explores the candidate\u2019s motivation and connects their current study and agent experience to the role\u2019s applied AI focus.",
+          "fact_ids": [
+            "fact-061aeb5a-431c-475d-84a6-a44196c698b2",
+            "fact-bd85fd99-c2ce-403f-a6ac-aca49197d2d7"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-cb098380-04fa-4418-9b1e-ab6172c3c279",
+            "resume-entry-0b16164e-2cf5-4b72-8509-14bea601c2f1"
+          ],
+          "job_requirement_excerpt": "Develop and evaluate machine-learning models and AI agents"
+        },
+        {
+          "question_id": "question-39992918-9483-444a-b533-03af805a82a8",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about a time during your Team Service Platform project when you had to collaborate with others or explain technical work to non-technical stakeholders. What did you do, and what was the outcome?",
+          "rationale": "This assesses collaboration and communication using a concrete group project that involved both backend implementation and a demonstration for non-technical stakeholders.",
+          "fact_ids": [
+            "fact-48b86a42-3c78-48f3-9fac-5df007dc6c4f"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1b226e5d-ed34-4c2e-ba81-cf7d8bb99322"
+          ],
+          "job_requirement_excerpt": "Work with senior AI researchers, data engineers, and geoscientists on practical systems using incomplete and noisy real-world data."
+        },
+        {
+          "question_id": "question-d2980446-2ae5-40aa-b2dd-a6cb1d085d1e",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "Suppose your tool-call agent had to work with incomplete or noisy observations from a real-world system. How would you design the loop to validate tool outputs, prevent unsafe or unbounded behaviour, and decide when to stop or retry?",
+          "rationale": "This tests agentic-AI reasoning directly relevant to the role while building on the candidate\u2019s bounded-loop prototype without assuming production experience.",
+          "fact_ids": [
+            "fact-bd85fd99-c2ce-403f-a6ac-aca49197d2d7"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0b16164e-2cf5-4b72-8509-14bea601c2f1"
+          ],
+          "job_requirement_excerpt": "using incomplete and noisy real-world data"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 2,
+        "technical": 1
+      },
+      "sensitive": []
+    },
+    {
+      "profile": "student_profile_05",
+      "job": "rag_agent_engineer",
+      "valid": true,
+      "questions": [
+        {
+          "question_id": "question-e15ad96a-7d62-4ba9-818c-11d3bd846d3e",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "What interests you about moving from your computing science studies and early software development experience toward an AI Engineer role focused on intelligent applications?",
+          "rationale": "This opening question explores the candidate\u2019s motivation and connects their documented background to the role\u2019s AI focus without assuming experience beyond the evidence.",
+          "fact_ids": [
+            "fact-061aeb5a-431c-475d-84a6-a44196c698b2",
+            "fact-bfae1d6f-7986-42ad-9ee7-9d798f509cb6"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-cb098380-04fa-4418-9b1e-ab6172c3c279",
+            "resume-entry-dc15944d-a745-4176-b956-05fa354e2663"
+          ],
+          "job_requirement_excerpt": "Develop intelligent enterprise applications that combine large language models with scalable data infrastructure."
+        },
+        {
+          "question_id": "question-e74ed70c-fe98-445e-bb5e-bfbd69893fa5",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "technical",
+          "status": "planned",
+          "text": "In your Tool-Call Agent Prototype, how did the bounded loop use the model\u2019s actions and tool observations, and what design changes would you make to improve reliability and prevent unsafe or unproductive tool use?",
+          "rationale": "This tests practical reasoning about agent workflows using the candidate\u2019s documented prototype and directly matches an AI Engineer responsibility.",
+          "fact_ids": [
+            "fact-bd85fd99-c2ce-403f-a6ac-aca49197d2d7"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-0b16164e-2cf5-4b72-8509-14bea601c2f1"
+          ],
+          "job_requirement_excerpt": "design and optimise RAG pipelines and AI-agent workflows"
+        },
+        {
+          "question_id": "question-21a0d3bd-0cb3-4c17-a98d-2237dd2afdaa",
+          "parent_question_id": null,
+          "kind": "main",
+          "category": "behavioural",
+          "status": "planned",
+          "text": "Tell me about a time during the Team Service Platform project or your software development cadet role when you worked with others to deliver or improve a software outcome, and what you contributed.",
+          "rationale": "This invites a concrete collaboration example relevant to deploying production-ready applications while staying within the candidate\u2019s documented team and workplace experience.",
+          "fact_ids": [
+            "fact-48b86a42-3c78-48f3-9fac-5df007dc6c4f",
+            "fact-bfae1d6f-7986-42ad-9ee7-9d798f509cb6"
+          ],
+          "resume_entry_ids": [
+            "resume-entry-1b226e5d-ed34-4c2e-ba81-cf7d8bb99322",
+            "resume-entry-dc15944d-a745-4176-b956-05fa354e2663"
+          ],
+          "job_requirement_excerpt": "collaborate with software engineers to deploy production-ready applications"
+        }
+      ],
+      "personalised": 3,
+      "with_excerpt": 3,
+      "categories": {
+        "behavioural": 2,
+        "technical": 1
+      },
+      "sensitive": []
+    }
+  ]
+}

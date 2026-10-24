@@ -5,5 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: { port: 5173 },
   // The optional PDF renderer is lazy-loaded and intentionally isolated from the app shell.
-  build: { chunkSizeWarningLimit: 1300 },
+  build: {
+    chunkSizeWarningLimit: 1300,
+    rolldownOptions: { input: { main: 'index.html', 'voice-dev': 'voice-dev.html' } },
+  },
 })
