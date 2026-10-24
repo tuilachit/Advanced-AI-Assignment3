@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections.abc import Callable
 from contextlib import suppress
 from copy import deepcopy
@@ -60,6 +61,7 @@ _CONTEXT_FIELDS = frozenset(
         "target_role",
     }
 )
+_LOGGER = logging.getLogger(__name__)
 _INVALID_ASSESSMENT = "The feedback assessment did not satisfy the evidence contract."
 
 
@@ -536,7 +538,7 @@ class InterviewFeedbackService:
                     continue
                 if canonical_question.question_id in by_id:
                     if canonical_question.status != "answered":
-                        raise _AssessmentContractError("unanswered assessment")
+                        raise _AssessmentContractError("question coverage")
                     combined.append(by_id[canonical_question.question_id])
                 else:
                     explanation = (
@@ -561,7 +563,21 @@ class InterviewFeedbackService:
                         )
                     )
             return ModelFeedbackAssessment(questions=combined)
-        except (ValidationError, _AssessmentContractError):
+        except ValidationError:
+            _LOGGER.warning("Feedback assessment rejected: schema validation")
+            raise ProviderProtocolError(_INVALID_ASSESSMENT) from None
+        except _AssessmentContractError as error:
+            # Only fixed categories enter logs; never include exception/response data.
+            reason = error.args[0]
+            if reason not in {
+                "question coverage",
+                "criterion coverage",
+                "applicability",
+                "non-assessed evidence",
+                "evidence provenance",
+            }:
+                reason = "schema validation"
+            _LOGGER.warning("Feedback assessment rejected: %s", reason)
             raise ProviderProtocolError(_INVALID_ASSESSMENT) from None
 
     def evaluate(self, prepared: PreparedFeedback) -> FeedbackReport:

@@ -1851,3 +1851,86 @@ def test_jobs_valid_post_with_different_id_retries_failed_evaluation(
     start_job(service, prepared, prepared.request.model_copy(update={"request_id": "new-retry"}))
     runner.run_next()
     assert job_result(service, prepared).feedback_status == "ready"
+
+
+def test_single_behavioural_answer_revision_one_through_sdk_adapter(preparation_fixture):
+    prepared = finish_preparation(preparation_fixture)
+    assert prepared.interview.transcript_revision == 1
+    assert len(prepared.answer_turns) == len(prepared.assessment_input.questions) == 1
+    assert prepared.assessment_input.questions[0].category == "behavioural"
+    proposal = full_assessment(prepared)
+    # A motivation answer need not provide enough STAR detail: do not invent evidence.
+    star = next(c for c in proposal.questions[0].criteria if c.criterion == "star")
+    star.applicability = "insufficient_evidence"
+    star.score = None
+    star.evidence = []
+    responses = FeedbackResponses(provider_response(proposal))
+    runner = ManualFeedbackRunner()
+    service = InterviewFeedbackService(preparation_fixture[1], adapter(responses), runner=runner)
+    assert start_job(service, prepared).feedback_status == "generating"
+    runner.run_next()
+    result = job_result(service, prepared)
+    assert result.feedback_status == "ready" and result.error is None
+    assert len(result.report.question_feedback) == 1
+    criteria = {c.criterion: c for c in result.report.question_feedback[0].criteria}
+    assert criteria["technical_reasoning"].applicability == "not_applicable"
+    assert criteria["technical_reasoning"].evidence == []
+    assert criteria["star"].applicability == "insufficient_evidence"
+    assert criteria["star"].evidence == []
+    assert len(responses.calls) == 1
+    instructions = responses.calls[0]["instructions"]
+    assert "category is the only applicability authority" in instructions
+    assert "For behavioural questions: technical_reasoning must be not_applicable" in instructions
+    assert "For technical questions: star must be not_applicable" in instructions
+    assert "score=null and evidence=[]" in instructions
+    assert "There are no exceptions" in instructions
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "question coverage",
+        "criterion coverage",
+        "applicability",
+        "non-assessed evidence",
+        "evidence provenance",
+        "schema validation",
+    ],
+)
+def test_rejection_logs_only_safe_category(preparation_fixture, caplog, reason):
+    prepared = finish_preparation(preparation_fixture)
+    proposal = full_assessment(prepared)
+    criteria = proposal.questions[0].criteria
+    irrelevant = next(c for c in criteria if c.criterion == "technical_reasoning")
+    if reason == "question coverage":
+        proposal.questions.clear()
+    elif reason == "criterion coverage":
+        criteria.pop()
+    elif reason == "applicability":
+        irrelevant.applicability = "assessed"
+        irrelevant.score = 3
+        irrelevant.evidence = [criteria[0].evidence[0].model_copy()]
+    elif reason == "non-assessed evidence":
+        irrelevant.evidence = [EvidenceQuote(turn_id="PRIVATE-ID", quote="PRIVATE-OUTPUT")]
+    elif reason == "evidence provenance":
+        criteria[0].evidence[0].quote = "PRIVATE-OUTPUT"
+    else:
+        criteria[0].score = 99
+    runner = ManualFeedbackRunner()
+    service = InterviewFeedbackService(
+        preparation_fixture[1],
+        adapter(FeedbackResponses(provider_response(proposal))),
+        runner=runner,
+    )
+    caplog.clear()
+    start_job(service, prepared)
+    runner.run_next()
+    result = job_result(service, prepared)
+    assert result.feedback_status == "failed"
+    assert result.error.code == "feedback_invalid_assessment"
+    # Provider-side schema failures and service-side grounding failures stay distinguishable.
+    assert [r.getMessage() for r in caplog.records] == [f"Feedback assessment rejected: {reason}"]
+    assert all(r.exc_info is None and r.stack_info is None for r in caplog.records)
+    assert "PRIVATE" not in caplog.text
+    assert prepared.answer_turns[0].text not in caplog.text
+    assert reason not in result.error.message
