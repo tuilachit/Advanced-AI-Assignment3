@@ -321,7 +321,14 @@ class InterviewFlowService:
             # A concurrent identical request may have finished first; keep only one.
             existing_id = self._create_keys.get((session_id, request.request_id))
             if existing_id is not None:
-                return self._records[existing_id].interview.model_copy(deep=True)
+                existing = self._records[existing_id]
+                if existing.create_fingerprint != fingerprint:
+                    raise InterviewConflictError(
+                        "request_id_conflict",
+                        "This request_id was already used with different input.",
+                        {"request_id": request.request_id},
+                    )
+                return existing.interview.model_copy(deep=True)
             self._records[interview.interview_id] = _InterviewRecord(
                 interview=interview,
                 context=context,
@@ -467,7 +474,7 @@ class InterviewFlowService:
     def start(
         self, session_id: str, interview_id: str, request: StartInterviewRequest
     ) -> StartInterviewResponse:
-        fingerprint = _fingerprint(request)
+        fingerprint = "start:" + _fingerprint(request)
         with self._record(session_id, interview_id) as record:
             if (replay := self._replay(record, request.request_id, fingerprint)) is not None:
                 return StartInterviewResponse.model_validate(replay.model_dump())
@@ -506,7 +513,7 @@ class InterviewFlowService:
     def next_step(
         self, session_id: str, interview_id: str, request: NextStepRequest
     ) -> AskQuestionStep | FinishStep:
-        fingerprint = _fingerprint(request)
+        fingerprint = "next_step:" + _fingerprint(request)
         with self._record(session_id, interview_id) as record:
             if (replay := self._replay(record, request.request_id, fingerprint)) is not None:
                 return replay  # type: ignore[return-value]
@@ -544,7 +551,7 @@ class InterviewFlowService:
     def skip(
         self, session_id: str, interview_id: str, request: SkipQuestionRequest
     ) -> AskQuestionStep | FinishStep:
-        fingerprint = _fingerprint(request)
+        fingerprint = "skip:" + _fingerprint(request)
         with self._record(session_id, interview_id) as record:
             if (replay := self._replay(record, request.request_id, fingerprint)) is not None:
                 return replay  # type: ignore[return-value]
@@ -568,7 +575,7 @@ class InterviewFlowService:
     def end(
         self, session_id: str, interview_id: str, request: InterviewControlRequest
     ) -> Interview:
-        fingerprint = _fingerprint(request)
+        fingerprint = "end:" + _fingerprint(request)
         with self._record(session_id, interview_id) as record:
             if (replay := self._replay(record, request.request_id, fingerprint)) is not None:
                 return Interview.model_validate(replay.model_dump())
@@ -584,7 +591,7 @@ class InterviewFlowService:
     def cancel(
         self, session_id: str, interview_id: str, request: InterviewControlRequest
     ) -> Interview:
-        fingerprint = _fingerprint(request)
+        fingerprint = "cancel:" + _fingerprint(request)
         with self._record(session_id, interview_id) as record:
             if (replay := self._replay(record, request.request_id, fingerprint)) is not None:
                 return Interview.model_validate(replay.model_dump())
