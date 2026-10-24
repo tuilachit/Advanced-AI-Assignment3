@@ -19,6 +19,134 @@ async function preview(page: Page) {
   return { errors, apiCalls }
 }
 
+test('orb follows voice states without audio analysis and settles after mute or disconnect', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-10-24T10:10:00Z') })
+  await page.clock.pauseAt(new Date('2026-10-24T10:10:01Z'))
+  const calls = await preview(page)
+  const orb = page.locator('.live-interview .interviewer-visualizer')
+  const animations = () => orb.evaluate((node) => node.getAnimations({ subtree: true })
+    .filter((animation) => animation.effect?.getTiming().iterations === Infinity).length)
+  await page.getByRole('button', { name: 'Start interview', exact: true }).click()
+  await expect(orb).toHaveAttribute('data-state', 'connecting')
+  await expect.poll(animations).toBeGreaterThan(0)
+  await page.clock.runFor(700)
+  await expect(orb).toHaveAttribute('data-state', 'speaking')
+  await expect(page.getByRole('heading', { name: 'Your interviewer is speaking' })).toBeVisible()
+  const interviewerAppearance = await orb.locator('.interviewer-orb-current--sage').evaluate((node) => getComputedStyle(node).opacity)
+  await page.clock.runFor(1800)
+  await expect(orb).toHaveAttribute('data-state', 'user-speaking')
+  await expect(page.getByRole('heading', { name: 'You have the floor' })).toBeVisible()
+  await expect.poll(() => orb.locator('.interviewer-orb-current--sage').evaluate((node) => getComputedStyle(node).opacity))
+    .not.toBe(interviewerAppearance)
+  await expect.poll(() => orb.locator('.interviewer-orbit').evaluate((node) => getComputedStyle(node, '::after').opacity))
+    .not.toBe('0')
+  await expect.poll(animations).toBeGreaterThan(0)
+  await page.getByRole('button', { name: 'Mute microphone', exact: true }).click()
+  await expect(orb).toHaveAttribute('data-state', 'muted')
+  await expect.poll(animations).toBe(0)
+  await page.getByRole('button', { name: 'Disconnect voice', exact: true }).click()
+  await expect(orb).toHaveAttribute('data-state', 'disconnected')
+  await expect(page.getByRole('heading', { name: 'Voice disconnected' })).toBeVisible()
+  await expect.poll(animations).toBe(0)
+  expect(calls.errors).toEqual([])
+  expect(calls.apiCalls).toEqual([])
+})
+
+test('orb review is isolated, responsive, and disables every animation under reduced motion', async ({ page }) => {
+  const calls = await preview(page)
+  await page.getByText('Orb states · visual review', { exact: true }).click()
+  const gallery = page.getByRole('region', { name: 'Simulated orb states' })
+  await expect(gallery.getByRole('article')).toHaveCount(10)
+  await expect(gallery).toContainText('Motion represents status, not measured audio volume')
+  for (const state of ['connecting', 'listening', 'speaking', 'user-speaking', 'finalizing']) {
+    const sample = gallery.locator(`[data-preview-state="${state}"] .interviewer-visualizer`)
+    await expect.poll(() => sample.evaluate((node) => node.getAnimations({ subtree: true }).length)).toBeGreaterThan(0)
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect.poll(() => gallery.evaluate((node) => node.getAnimations({ subtree: true }).length)).toBe(0)
+  const motionDisabled = () => gallery.locator('.interviewer-visualizer').evaluateAll((orbs) => orbs.every((orb) =>
+    [orb, ...orb.querySelectorAll('*')].every((node) => [null, '::before', '::after'].every((pseudo) => {
+      const style = getComputedStyle(node, pseudo)
+      return style.animationName === 'none' && style.transitionDuration === '0s'
+    }))))
+  expect(await motionDisabled()).toBe(true)
+  for (const width of [1440, 768, 375, 320]) {
+    await page.setViewportSize({ width, height: 1000 })
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  }
+  await page.getByText('Orb states · visual review', { exact: true }).click()
+  await expect(gallery).toHaveCount(0)
+  await expect(page.locator('.interviewer-visualizer')).toHaveCount(1)
+  expect(calls.errors).toEqual([])
+  expect(calls.apiCalls).toEqual([])
+})
+
+test('speaking ripples move outward at distinct rhythms without moving the layout', async ({ page }) => {
+  const calls = await preview(page)
+  await page.getByText('Orb states · visual review', { exact: true }).click()
+  const gallery = page.getByRole('region', { name: 'Simulated orb states' })
+  for (const width of [1440, 375, 320]) {
+    await page.setViewportSize({ width, height: 1000 })
+    const durations: number[] = []
+    for (const state of ['speaking', 'user-speaking']) {
+      const sample = gallery.locator(`[data-preview-state="${state}"] .interviewer-visualizer`)
+      const result = await sample.evaluate((node) => {
+        const animations = node.getAnimations({ subtree: true }).filter((animation) =>
+          animation.effect?.getTiming().iterations === Infinity)
+        animations.forEach((animation) => animation.pause())
+        const ripples = animations.filter((animation) => animation instanceof CSSAnimation &&
+          animation.animationName === 'interviewer-ripple-out')
+        if (ripples.length !== 2) throw new Error('Both outward ripple surfaces must be animated')
+        const duration = Number(ripples[0].effect!.getTiming().duration)
+        const layer = node.querySelector('.interviewer-ripples')!
+        const core = node.querySelector('.interviewer-orb')!
+        const shape = () => {
+          const rect = core.getBoundingClientRect()
+          return { width: rect.width, height: rect.height }
+        }
+        const sampleAt = (progress: number) => {
+          animations.forEach((animation) => {
+            animation.currentTime = Number(animation.effect!.getTiming().duration) * progress
+          })
+          const ring = getComputedStyle(layer, '::before')
+          const frame = node.getBoundingClientRect()
+          const heading = node.parentElement!.querySelector('h3')!.getBoundingClientRect()
+          return { radius: new DOMMatrixReadOnly(ring.transform).a, opacity: Number(ring.opacity),
+            frame: { x: frame.x, y: frame.y, width: frame.width, height: frame.height }, headingTop: heading.top }
+        }
+        const start = sampleAt(.16)
+        const initialShape = shape()
+        const end = sampleAt(.72)
+        const changedShape = shape()
+        const paintOnly = animations.every((animation) => (animation.effect as KeyframeEffect).getKeyframes()
+          .every((frame) => Object.keys(frame).every((key) =>
+            ['offset', 'computedOffset', 'easing', 'composite', 'transform', 'opacity'].includes(key))))
+        const maximumDiameter = parseFloat(getComputedStyle(layer).width) *
+          parseFloat(getComputedStyle(node).getPropertyValue('--orb-ripple-end'))
+        return { start, end, duration, paintOnly, maximumDiameter, initialShape, changedShape }
+      })
+      expect(result.end.radius).toBeGreaterThan(result.start.radius)
+      expect(result.start.opacity).toBeGreaterThan(result.end.opacity)
+      expect(result.end.frame).toEqual(result.start.frame)
+      expect(result.end.headingTop).toBe(result.start.headingTop)
+      expect(result.maximumDiameter).toBeLessThanOrEqual(result.start.frame.width)
+      expect(result.paintOnly).toBe(true)
+      if (state === 'speaking') {
+        expect(Math.abs(result.initialShape.width - result.changedShape.width)).toBeGreaterThan(3)
+      }
+      durations.push(result.duration)
+    }
+    expect(durations[1]).toBeLessThan(durations[0])
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  }
+  for (const state of ['ready', 'muted', 'disconnected']) {
+    await expect.poll(() => gallery.locator(`[data-preview-state="${state}"]`)
+      .evaluate((node) => node.getAnimations({ subtree: true }).length)).toBe(0)
+  }
+  expect(calls.errors).toEqual([])
+  expect(calls.apiCalls).toEqual([])
+})
+
 test('live preview starts explicitly, displays captions and remains responsive with no audio or API requests', async ({ page }) => {
   const calls = await preview(page)
   await expect(page.getByRole('timer')).toHaveText('10:00')

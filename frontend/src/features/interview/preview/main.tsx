@@ -6,6 +6,7 @@ import '../interview.css'
 import { LiveInterviewStage } from '../live/LiveInterviewStage'
 import { InterviewFeedback } from '../feedback/InterviewFeedback'
 import { PreviewVoiceController, previewInterview } from './previewController'
+import { OrbStatePreview } from './OrbStatePreview'
 
 function LivePreview() {
   const [controller] = useState(() => new PreviewVoiceController())
@@ -30,6 +31,7 @@ function LivePreview() {
           <button className="secondary-button" onClick={() => controller.simulateFailure('audio_playback_blocked')}>Simulate blocked audio</button>
           <button className="secondary-button" onClick={() => window.location.reload()}>Reset preview</button>
         </div></details> : null}
+      {!feedbackOpen ? <OrbStatePreview interview={interview} /> : null}
     </main></div>
 }
 

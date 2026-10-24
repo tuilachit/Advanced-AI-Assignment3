@@ -13,7 +13,7 @@ export type VoiceController = Pick<RealtimeVoiceController,
   'subscribe' | 'connect' | 'set_muted' | 'resume_audio' | 'skip' | 'finish' | 'disconnect'>
 
 export type VisualizerState = 'ready' | 'connecting' | 'listening' | 'speaking' |
-  'user-speaking' | 'muted' | 'error' | 'finalizing' | 'finished'
+  'user-speaking' | 'muted' | 'disconnected' | 'error' | 'finalizing' | 'finished'
 
 export interface VisualizerProps {
   state: VisualizerState

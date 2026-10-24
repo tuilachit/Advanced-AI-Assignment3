@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { preparedInterview } from '../../../test/interviewFixtures'
 import type { Interview, TranscriptTurn } from '../../../types'
-import { initialLiveState, liveReducer } from './liveState'
+import { initialLiveState, liveReducer, visualizerState } from './liveState'
 
 function active(): Interview {
   return { ...preparedInterview({ request_id: 'state-test', job: { source: 'supplied_job', document_id: 'job-1' },
@@ -15,6 +15,18 @@ function turn(patch: Partial<TranscriptTurn> = {}): TranscriptTurn {
 }
 
 describe('voice event and canonical snapshot reconciliation', () => {
+  it('keeps disconnected and safety states ahead of stale speech activity in the visualizer', () => {
+    const state = { ...initialLiveState(active()),
+      activity: { muted: false, candidate_speaking: true, interviewer_playing: true } }
+    expect(visualizerState(state)).toBe('disconnected')
+    expect(visualizerState({ ...state, interview: { ...state.interview, phase: 'ready' } })).toBe('ready')
+    expect(visualizerState({ ...state, connection: 'connecting' })).toBe('connecting')
+    expect(visualizerState({ ...state, connection: 'failed' })).toBe('error')
+    expect(visualizerState({ ...state, connection: 'connected', activity: { ...state.activity, muted: true } })).toBe('muted')
+    expect(visualizerState({ ...state, connection: 'connected', interview: { ...state.interview, phase: 'finalizing' } })).toBe('finalizing')
+    expect(visualizerState({ ...state, connection: 'connected', interview: { ...state.interview, phase: 'completed' } })).toBe('finished')
+  })
+
   it.each([
     { session_id: 'another-session' }, { interview_id: 'another-interview' },
     { context_hash: 'another-context' }, { flow_revision: 1 }, { transcript_revision: 3 },

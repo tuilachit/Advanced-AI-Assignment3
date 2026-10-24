@@ -87,7 +87,7 @@ export function visualizerState(state: LiveState): VisualizerState {
   if (state.interview.phase === 'finalizing') return 'finalizing'
   if (state.connection === 'connecting') return 'connecting'
   if (state.error || state.connection === 'failed') return 'error'
-  if (state.connection !== 'connected') return 'ready'
+  if (state.connection !== 'connected') return state.interview.phase === 'ready' ? 'ready' : 'disconnected'
   if (state.activity.muted) return 'muted'
   if (state.activity.candidate_speaking) return 'user-speaking'
   if (state.activity.interviewer_playing) return 'speaking'

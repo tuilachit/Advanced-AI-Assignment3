@@ -9,16 +9,6 @@
 .live-timer > [role=timer] { font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
 .live-timer[data-urgent=true] { color: #943f30; }
 .live-visualizer-slot { text-align: center; padding: 12px 0 24px; }
-.interviewer-visualizer { position: relative; isolation: isolate; width: 230px; height: 230px; margin: 0 auto; display: grid; place-items: center; }
-.interviewer-halo { position: absolute; inset: 10px; border-radius: 50%; background: radial-gradient(circle, #b5d6e74d, #dae8ef33 65%, transparent 70%); }
-.interviewer-orb { width: 146px; height: 146px; display: grid; place-content: center; grid-template-columns: repeat(3, 5px); gap: 7px; border-radius: 50%; border: 1px solid #c5dbe5;
-  background: radial-gradient(circle at 35% 28%, #fff 5%, #e8f4fa 29%, #b8d3e3 68%, #7f9fb2); box-shadow: inset -10px -13px 25px #5b7c9722, 0 12px 38px #7e9aac28; }
-.interviewer-orb > span { width: 5px; height: 20px; border-radius: 4px; background: #58768a; opacity: .6; }
-.interviewer-orb > span:nth-child(2) { height: 32px; align-self: center; margin-block: -6px; }
-.interviewer-visualizer[data-state=speaking] .interviewer-orb, .interviewer-visualizer[data-state=user-speaking] .interviewer-orb { animation: interviewer-breathe 2s ease-in-out infinite; }
-.interviewer-visualizer[data-state=connecting] .interviewer-halo, .interviewer-visualizer[data-state=finalizing] .interviewer-halo { animation: interviewer-breathe 3s ease-in-out infinite; }
-.interviewer-visualizer[data-state=muted] .interviewer-orb, .interviewer-visualizer[data-state=finished] .interviewer-orb { filter: saturate(.35); }
-.interviewer-visualizer[data-state=error] .interviewer-orb { border-color: #bc897d; filter: saturate(.4); }
 .live-activity h3 { margin: 0 0 8px; font-size: 22px; font-weight: 500; letter-spacing: -.5px; }
 .live-activity p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .live-question { padding: 22px 0; border-block: 1px solid var(--line); margin-bottom: 22px; }
@@ -65,13 +55,10 @@
 .live-preview-tools summary { cursor: pointer; padding-block: 10px; }
 .live-preview-tools .live-controls { justify-content: flex-start; }
 .interview-ready-actions { display: flex; flex-wrap: wrap; gap: 14px; }
-@keyframes interviewer-breathe { 50% { transform: scale(1.04); } }
 @media (max-width: 1000px) { .live-workspace { grid-template-columns: minmax(0, 1fr); } .live-transcript-scroll { height: 360px; } }
 @media (max-width: 620px) {
   .live-interview .section-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
   .live-conversation { padding: 18px; }
-  .interviewer-visualizer { width: 190px; height: 190px; }
-  .interviewer-orb { width: 126px; height: 126px; }
   .live-activity h3 { font-size: 21px; }
   .live-question > p { font-size: 20px; }
   .live-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
