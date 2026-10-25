@@ -6,13 +6,14 @@ import { feedbackResponse, unassessedFeedback } from '../src/test/feedbackFixtur
 import type { Interview } from '../src/types'
 
 type Hardware = { microphones: number; stopped: number; closed: number; paused: number;
-  emit(event: Record<string, unknown>): void }
+  emit(event: Record<string, unknown>): void; inputEnabled(): boolean; startQuestion(): void; stopQuestion(): void }
 type VoiceWindow = Window & { voiceHardware: Hardware }
 
 test('main UI uses the real controller, releases voice on navigation and retains the completed transcript for feedback', async ({ page }) => {
   // Replace only browser hardware/SDP and HTTP. This is not the scripted preview.
   await page.addInitScript(() => {
-    const hardware: Hardware = { microphones: 0, stopped: 0, closed: 0, paused: 0, emit: () => {} }
+    const hardware: Hardware = { microphones: 0, stopped: 0, closed: 0, paused: 0, emit: () => {},
+      inputEnabled: () => false, startQuestion: () => {}, stopQuestion: () => {} }
     Object.assign(window, { voiceHardware: hardware })
     let stream: MediaStream
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
@@ -20,6 +21,7 @@ test('main UI uses the real controller, releases voice on navigation and retains
         hardware.microphones++
         stream = new MediaStream()
         const track = { enabled: true, stop: () => { hardware.stopped++ } }
+        hardware.inputEnabled = () => track.enabled
         Object.defineProperty(stream, 'getTracks', { value: () => [track] })
         Object.defineProperty(stream, 'getAudioTracks', { value: () => [track] })
         return stream
@@ -30,8 +32,12 @@ test('main UI uses the real controller, releases voice on navigation and retains
     HTMLMediaElement.prototype.pause = function () { hardware.paused++ }
     class Channel extends EventTarget {
       readyState = 'open'
+      question: { metadata: Record<string, string> } | null = null
       close() { this.readyState = 'closed' }
-      send() {}
+      send(data: string) {
+        const event = JSON.parse(data)
+        if (event.type === 'response.create') this.question = event.response
+      }
     }
     class Peer extends EventTarget {
       connectionState = 'connected'
@@ -40,6 +46,17 @@ test('main UI uses the real controller, releases voice on navigation and retains
       close() { hardware.closed++ }
       createDataChannel() {
         hardware.emit = (event) => this.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
+        hardware.startQuestion = () => {
+          const request = this.channel.question!
+          const id = 'response-' + request.metadata.speech_request_id
+          hardware.emit({ type: 'response.created', response: { id, metadata: request.metadata } })
+          hardware.emit({ type: 'response.output_item.added', response_id: id,
+            item: { id: 'item-' + id, type: 'message', role: 'assistant' } })
+          hardware.emit({ type: 'output_audio_buffer.started', response_id: id })
+          hardware.emit({ type: 'response.done', response: { id, status: 'completed', output: [] } })
+        }
+        hardware.stopQuestion = () => hardware.emit({ type: 'output_audio_buffer.stopped',
+          response_id: 'response-' + this.channel.question!.metadata.speech_request_id })
         return this.channel
       }
       async createOffer() { return { type: 'offer', sdp: 'test-offer' } }
@@ -157,7 +174,16 @@ test('main UI uses the real controller, releases voice on navigation and retains
   await expect(page.getByText('UI preview · simulated interview')).toHaveCount(0)
   await page.getByRole('button', { name: 'Start interview', exact: true }).click()
   await expect(page.getByText('Connected', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Preparing your question', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => (window as VoiceWindow).voiceHardware.inputEnabled())).toBe(false)
+  await page.evaluate(() => (window as VoiceWindow).voiceHardware.startQuestion())
+  await expect(page.getByRole('heading', { name: 'Your interviewer is speaking', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => (window as VoiceWindow).voiceHardware.inputEnabled())).toBe(false)
+  await expect(page.getByRole('button', { name: 'Skip question' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'End interview' })).toBeEnabled()
+  await page.evaluate(() => (window as VoiceWindow).voiceHardware.stopQuestion())
   await expect(page.getByRole('heading', { name: 'Listening', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => (window as VoiceWindow).voiceHardware.inputEnabled())).toBe(true)
   await page.evaluate(() => {
     const emit = (window as VoiceWindow).voiceHardware.emit
     emit({ type: 'input_audio_buffer.speech_started', item_id: 'browser-answer', audio_start_ms: 100 })

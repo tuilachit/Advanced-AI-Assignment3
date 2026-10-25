@@ -1,11 +1,12 @@
 import type { VoiceEvent } from './types'
 
-type OrbState = 'idle' | 'ready' | 'connecting' | 'listening' | 'speaking' | 'user-speaking' | 'muted' | 'error' | 'finished'
+type OrbState = 'idle' | 'ready' | 'connecting' | 'preparing' | 'listening' | 'speaking' | 'user-speaking' | 'muted' | 'error' | 'finished'
 
 const copy: Record<OrbState, [string, string]> = {
   idle: ['A space to find your voice', 'Prepare the demo below. Your microphone stays off until you start.'],
   ready: ['Ready when you are', 'Start your interview, take a breath, and speak naturally.'],
   connecting: ['Connecting', 'Getting your microphone and interviewer ready…'],
+  preparing: ['Preparing your question', 'Your microphone will listen after the question finishes.'],
   listening: ['Listening', 'Take your time. There’s no need to rush.'],
   speaking: ['Your interviewer is speaking', 'Listen, then answer in your own words.'],
   'user-speaking': ['You have the floor', 'Keep going. Your live caption will settle into a final transcript.'],
@@ -43,7 +44,7 @@ export class VoiceOrbView {
       else if (this.orb.dataset.state !== 'error') this.show(this.prepared ? 'ready' : 'idle')
     } else if (event.type === 'activity' && this.connected) {
       this.show(event.muted ? 'muted' : event.candidate_speaking ? 'user-speaking'
-        : event.interviewer_playing ? 'speaking' : 'listening')
+        : event.interviewer_playing ? 'speaking' : event.input_paused ? 'preparing' : 'listening')
     }
   }
 

@@ -41,12 +41,16 @@ export function LiveInterviewStage({ interview: initial, visible = true, integra
   const mainNumber = mains.findIndex((item) => item.question_id === mainId) + 1
   const completed = mains.filter((item) => ['answered', 'skipped'].includes(item.status)).length
   const state = finalizing ? 'finalizing' : visualizerState(live.state)
-  const [label, hint] = visualizerCopy[state]
+  const preparingQuestion = connected && !activity.muted && activity.input_paused && !activity.interviewer_playing
+    && !finalizing && !terminal && !error
+  const [label, hint] = preparingQuestion
+    ? ['Preparing your question', 'Your microphone will listen after the question finishes.'] : visualizerCopy[state]
   const Visualizer = integration.Visualizer ?? InterviewerVisualizer
   const connectionLabel = { disconnected: 'Disconnected', connecting: 'Connecting', connected: 'Connected', failed: 'Connection lost' }[connection]
   const microphoneLabel = preview ? 'Microphone off · simulated'
     : connection === 'connecting' ? 'Microphone access requested · connecting'
-      : connected ? activity.muted ? 'Microphone muted' : 'Microphone on' : 'Microphone off'
+      : connected ? activity.muted ? 'Microphone muted'
+        : activity.input_paused ? 'Microphone paused until the question finishes' : 'Microphone on' : 'Microphone off'
 
   return <section className="stage-panel live-interview" aria-labelledby="live-interview-title">
     {preview ? <div className="live-preview-label" role="note"><strong>UI preview · simulated interview</strong>

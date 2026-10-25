@@ -20,7 +20,7 @@ export interface InterviewApi {
 
 export type VoiceEvent =
   | { type: 'connection'; status: 'disconnected' | 'connecting' | 'connected' | 'failed' }
-  | { type: 'activity'; candidate_speaking: boolean; interviewer_playing: boolean; muted: boolean }
+  | { type: 'activity'; candidate_speaking: boolean; interviewer_playing: boolean; muted: boolean; input_paused?: boolean }
   | { type: 'transcript'; turn: TranscriptTurn }
   | { type: 'question'; question: Question; flow_revision: number }
   | { type: 'finished'; interview: Interview }
@@ -33,5 +33,6 @@ export interface VoiceSessionOptions {
   send(event: Record<string, unknown>): void
   emit(event: VoiceEvent): void
   can_hear_audio(): boolean
+  set_input_paused?(paused: boolean): void
   retry_delay_ms?: number
 }

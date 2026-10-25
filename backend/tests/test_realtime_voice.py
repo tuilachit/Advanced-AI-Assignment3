@@ -228,6 +228,9 @@ def test_provider_payload_uses_native_audio_transcription_and_bounded_tools() ->
     assert session["audio"]["input"]["noise_reduction"] == {"type": "far_field"}
     assert session["audio"]["output"] == {"voice": "marin", "speed": 1.0}
     assert session["audio"]["input"]["turn_detection"]["type"] == "semantic_vad"
+    assert session["audio"]["input"]["turn_detection"]["create_response"] is True
+    assert session["audio"]["input"]["turn_detection"]["interrupt_response"] is False
+    assert session["output_modalities"] == ["text"]
     assert session["tool_choice"] == "required"
     assert {tool["name"] for tool in session["tools"]} == {
         "advance_interview",

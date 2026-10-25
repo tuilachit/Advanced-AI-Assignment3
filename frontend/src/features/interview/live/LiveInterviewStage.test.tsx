@@ -54,6 +54,24 @@ async function start() {
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
 describe('live interview UI', () => {
+  it('explains automatic microphone gating without disabling Skip or Finish', async () => {
+    const h = harness()
+    render(<LiveInterviewStage interview={ready()} integration={h.integration} onClose={vi.fn()} />)
+    await start()
+    act(() => h.emit({ type: 'activity', muted: false, input_paused: true,
+      candidate_speaking: false, interviewer_playing: false }))
+    expect(screen.getByRole('heading', { name: 'Preparing your question' })).toBeVisible()
+    expect(screen.getByText('Microphone paused until the question finishes')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Skip question' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'End interview' })).toBeEnabled()
+    act(() => h.emit({ type: 'activity', muted: false, input_paused: true,
+      candidate_speaking: false, interviewer_playing: true }))
+    expect(screen.getByRole('heading', { name: 'Your interviewer is speaking' })).toBeVisible()
+    act(() => h.emit({ type: 'activity', muted: false, input_paused: false,
+      candidate_speaking: false, interviewer_playing: false }))
+    expect(screen.getByText('Microphone on')).toBeVisible()
+  })
+
   it('loads the real record but cannot start without a voice adapter', async () => {
     const readInterview = vi.fn(async () => ready())
     render(<LiveInterviewStage interview={ready()} integration={{ createController: () => null, readInterview }} onClose={vi.fn()} />)

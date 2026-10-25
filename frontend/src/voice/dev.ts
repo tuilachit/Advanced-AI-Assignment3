@@ -35,7 +35,8 @@ function update(event: VoiceEvent) {
     button('mute').setAttribute('aria-pressed', String(muted))
     element('activity').textContent = event.muted ? 'Microphone muted'
       : event.candidate_speaking ? 'Listening to you…'
-        : event.interviewer_playing ? 'Interviewer speaking…' : 'Listening — take your time.'
+        : event.interviewer_playing ? 'Interviewer speaking…'
+          : event.input_paused ? 'Microphone paused until the question finishes.' : 'Listening — take your time.'
   } else if (event.type === 'question') element('question').textContent = event.question.text
   else if (event.type === 'error') fail(event.message)
   else if (event.type === 'finished') {
