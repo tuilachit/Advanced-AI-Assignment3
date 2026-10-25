@@ -98,12 +98,37 @@ stay on the backend; the browser receives only a short-lived connection credenti
 
 Editing a confirmed profile invalidates its retrieval results, selected job, CV and validation so stale evidence cannot be exported.
 
+### Profile fact categories
+
+Fact `field` keys identify individual facts, not a single slot per category. Extraction uses
+separate stable keys such as `experience_startup`, `experience_internship` and
+`project_retrieval` so multiple entries keep their own IDs, source references and review status.
+The shared category policy recognises existing labels such as `projects`, `other_experience`,
+`technical_skills` and `research_*` too. Research counts as project evidence, not professional
+tenure. Confirmation, retrieval scores/explanations, requirements checks and interview-feedback
+context use that same policy; existing sessions do not need their facts renamed.
+
+Unknown, private/contact and goal/aspiration labels are not treated as matching evidence.
+Retrieval queries retain all recognised confirmed facts in deterministic category/key order;
+contact fields are excluded. Draft or negated/aspirational facts cannot support matching
+evidence, and projects cannot establish professional years or degree requirements.
+The agent receives the server's missing-category list but never confirms facts for the user.
+
 ## Quality checks
+
+Rich profile/CV generation and evidence checks use a 120-second model-request timeout,
+independent of the shorter shared-client/realtime timeout. A timed-out request reports
+`provider_timeout`; it is not silently retried. Explicit output-token truncation permits
+one bounded retry with a larger output budget, and partial responses are never applied.
+Review any already-saved profile changes before retrying a multi-step conversation.
 
 GitHub Actions runs offline backend and frontend checks on pull requests and pushes to `main`.
 It uses fake providers, a blank API-key environment and no repository secrets. Hosted checks
 cover tests, lint, types, API contract drift, production build and browser workflows; they do
 not establish live microphone quality or real-provider acceptance.
+Browser checks run their own port-5175 frontend with a fixed mock API root and never reuse
+your live development server. See `docs/evidence/manual-live-walkthrough-2026-10-25.md`
+for the observed browser-to-PDF and user-assisted voice/feedback acceptance run.
 
 ```bash
 source .venv/bin/activate

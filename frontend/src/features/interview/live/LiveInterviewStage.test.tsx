@@ -54,6 +54,16 @@ async function start() {
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
 describe('live interview UI', () => {
+  it('does not claim no questions were issued when completion clears the current question', async () => {
+    const h = harness()
+    render(<LiveInterviewStage interview={ready()} integration={h.integration} onClose={vi.fn()} />)
+    await start()
+    act(() => h.emit({ type: 'finished', interview: { ...h.holder.interview,
+      phase: 'completed', current_question_id: null, flow_revision: 2 } }))
+    expect(screen.queryByText('No question was issued in this interview.')).not.toBeInTheDocument()
+    expect(screen.getByText('Review the questions and answers in your transcript below.')).toBeVisible()
+  })
+
   it('explains automatic microphone gating without disabling Skip or Finish', async () => {
     const h = harness()
     render(<LiveInterviewStage interview={ready()} integration={h.integration} onClose={vi.fn()} />)

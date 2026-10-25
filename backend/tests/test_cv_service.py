@@ -23,11 +23,12 @@ from app.providers.fake import ScriptedCVProvider
 from app.services.cv import CVEvidenceError, CVService, cv_content_hash
 
 
-def test_cv_generation_uses_only_contact_and_approved_entries_for_two_jobs() -> None:
+@pytest.mark.parametrize("contact_field", ["email", "contact_email", "email_address", "portfolio"])
+def test_cv_generation_uses_only_contact_and_approved_entries_for_two_jobs(contact_field) -> None:
     workflow, session_id, job = prepared_workflow()
     session = workflow.get_session(session_id)
     contact = session.profile.facts[0].model_copy(
-        update={"field": "email", "value": "maya@test.edu"}
+        update={"field": contact_field, "value": "maya@test.edu"}
     )
     contact.fact_id = "fact-email"
     session.profile.facts.append(contact)
@@ -44,7 +45,7 @@ def test_cv_generation_uses_only_contact_and_approved_entries_for_two_jobs() -> 
 
     class NarrowProvider(ScriptedCVProvider):
         def generate_cv(self, contact_facts, approved_entries, job):
-            assert {f.field for f in contact_facts} == {"name", "email"}
+            assert {f.field for f in contact_facts} == {"name", contact_field}
             assert [e.entry_id for e in approved_entries] == [session.resume_entries[0].entry_id]
             return CVDocument(
                 target_job_id=job.document_id,

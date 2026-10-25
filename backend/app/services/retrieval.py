@@ -18,6 +18,7 @@ from app.domain.models import (
     RetrievalResult,
     RetrievalScoreBreakdown,
 )
+from app.domain.profile_fields import profile_field_category
 
 
 class EmbeddingProvider(Protocol):
@@ -103,7 +104,6 @@ def _job_terms_by_fact_field(job_profile: JobMatchProfile) -> dict[str, frozense
     return {
         "project": project_terms,
         "skills": skill_terms,
-        "technical_skills": skill_terms,
         "target_role": domain_terms,
         "education": job_profile.title_terms | job_profile.mandatory_requirement_terms,
         "experience": (job_profile.responsibility_terms | job_profile.mandatory_requirement_terms),
@@ -116,13 +116,12 @@ def score_job_evidence(
     job_terms = _job_terms_by_fact_field(job_profile)
     candidate_terms: dict[str, set[str]] = {field: set() for field in job_terms}
     for fact in profile.facts:
-        if fact.field in candidate_terms and _fact_can_support_evidence(fact):
-            candidate_terms[fact.field].update(_ranking_terms(fact.value))
+        category = profile_field_category(fact.field)
+        if category in candidate_terms and _fact_can_support_evidence(fact):
+            candidate_terms[category].update(_ranking_terms(fact.value))
 
     project_score = overlap_score(candidate_terms["project"], job_terms["project"])
-    skill_score = overlap_score(
-        candidate_terms["skills"] | candidate_terms["technical_skills"], job_terms["skills"]
-    )
+    skill_score = overlap_score(candidate_terms["skills"], job_terms["skills"])
     target_role_score = overlap_score(candidate_terms["target_role"], job_terms["target_role"])
     education_score = overlap_score(candidate_terms["education"], job_terms["education"])
     experience_score = overlap_score(candidate_terms["experience"], job_terms["experience"])
@@ -160,14 +159,16 @@ def rerank_scored_jobs(
 
 
 def build_profile_query(profile: ProfileDraft) -> str:
-    confirmed = {
-        fact.field: fact.value
+    confirmed = [
+        (category, fact.field, fact.value)
         for fact in profile.facts
         if fact.status is FactStatus.CONFIRMED
-    }
-    ordered_fields = [field for field in PROFILE_FIELD_ORDER if field in confirmed]
-    ordered_fields.extend(sorted(set(confirmed) - set(ordered_fields) - {"name"}))
-    return "\n".join(f"{field}: {confirmed[field]}" for field in ordered_fields)
+        and (category := profile_field_category(fact.field)) is not None
+        and category != "name"
+    ]
+    order = {field: index for index, field in enumerate(PROFILE_FIELD_ORDER)}
+    confirmed.sort(key=lambda item: (order.get(item[0], len(order)), *item))
+    return "\n".join(f"{category}: {value}" for category, _field, value in confirmed)
 
 
 def cosine_similarity(left: list[float], right: list[float]) -> float:
@@ -265,9 +266,10 @@ def _match_reasons(
     job_terms = _job_terms_by_fact_field(job_profile or build_job_match_profile(job))
     reasons: list[str] = []
     for fact in profile.facts:
-        if fact.field not in job_terms or not _fact_can_support_evidence(fact):
+        category = profile_field_category(fact.field)
+        if category not in job_terms or not _fact_can_support_evidence(fact):
             continue
-        overlap = sorted(_ranking_terms(fact.value) & job_terms[fact.field])
+        overlap = sorted(_ranking_terms(fact.value) & job_terms[category])
         if overlap:
             reasons.append(f"{fact.field}: {', '.join(overlap[:5])}")
     return reasons[:3]
@@ -277,10 +279,7 @@ def _matched_skills(profile: ProfileDraft, job: Job) -> list[str]:
     job_tokens = _evidence_tokens(f"{job.title} {job.description}")
     matched: list[str] = []
     for fact in profile.facts:
-        if (
-            fact.field in {"skills", "technical_skills"}
-            and _fact_can_support_evidence(fact)
-        ):
+        if profile_field_category(fact.field) == "skills" and _fact_can_support_evidence(fact):
             for skill in re.split(r"\s*(?:[,;\n]|\band\b)\s*", fact.value):
                 cleaned = skill.strip()
                 skill_tokens = _evidence_tokens(cleaned)
@@ -485,18 +484,16 @@ def _has_confirmed_evidence(requirement: str, profile: ProfileDraft) -> bool:
         fact
         for fact in profile.facts
         if _fact_can_support_evidence(fact)
-        and any(
-            category in fact.field.lower()
-            for category in (
-                "education",
-                "skill",
-                "experience",
-                "project",
-                "achievement",
-                "activity",
-                "certification",
-            )
-        )
+        and profile_field_category(fact.field)
+        in {
+            "education",
+            "skills",
+            "experience",
+            "project",
+            "achievement",
+            "activity",
+            "certification",
+        }
     ]
     evidence_text = " ".join(fact.value for fact in evidence_facts)
     required_years = _years_mentioned(requirement)
@@ -510,17 +507,16 @@ def _has_confirmed_evidence(requirement: str, profile: ProfileDraft) -> bool:
                 if maximum_constraint
                 else stated_years >= required_years
             )
-            and (
-                not requirement_domain
-                or bool(requirement_domain & _evidence_tokens(fact.value))
-            )
+            and (not requirement_domain or bool(requirement_domain & _evidence_tokens(fact.value)))
             for fact in evidence_facts
-            if "experience" in fact.field.lower()
+            if profile_field_category(fact.field) == "experience"
         )
 
     lowered = requirement.lower()
     education_text = " ".join(
-        fact.value.lower() for fact in evidence_facts if "education" in fact.field
+        fact.value.lower()
+        for fact in evidence_facts
+        if profile_field_category(fact.field) == "education"
     )
     if "master's degree" in lowered or "masters degree" in lowered:
         has_level = any(level in education_text for level in ("master", "phd", "doctor"))

@@ -67,6 +67,38 @@ function questionResponse(session: InterviewVoiceSession, sent: Record<string, u
 }
 
 describe('native voice transcript and progression', () => {
+  it.each(['response.output_audio.delta', 'response.output_audio_transcript.delta', 'output_audio_buffer.started'])(
+    'still blocks unissued audio event %s even when the response advertises text', async type => {
+      const { session, saved, events, sent } = setup()
+      session.handle({ type: 'response.created', response: { id: 'control', output_modalities: ['text'] } })
+      session.handle({ type, response_id: 'control', item_id: 'unexpected', delta: 'not permitted' })
+      await session.flush()
+      expect(saved.size).toBe(0)
+      expect(sent).toContainEqual({ type: 'output_audio_buffer.clear' })
+      expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'unissued_question' }))
+    },
+  )
+
+  it('does not mistake a text-only control response for unauthorized question audio', async () => {
+    const { session, saved, events, steps } = setup()
+    speech(session)
+    final(session)
+    session.handle({ type: 'response.created', response: {
+      id: 'control', output_modalities: ['text'], metadata: null,
+    } })
+    session.handle({ type: 'response.output_item.added', response_id: 'control', item: {
+      id: 'control-text', type: 'message', role: 'assistant', content: [],
+    } })
+    session.handle({ type: 'response.done', response: { id: 'control', status: 'completed', output: [
+      { type: 'function_call', name: 'advance_interview', call_id: 'control-call',
+        arguments: '{"follow_up_question":"","follow_up_rationale":""}' },
+    ] } })
+    await session.flush()
+    expect(events.filter(event => event.type === 'error')).toEqual([])
+    expect([...saved.values()].filter(turn => turn.speaker === 'interviewer')).toEqual([])
+    expect(steps).toHaveLength(1)
+  })
+
   it.each([false, true])('suspends an already-running ASR deadline when question speech is queued=%s', async queued => {
     vi.useFakeTimers()
     const { session, sent, events } = setup()

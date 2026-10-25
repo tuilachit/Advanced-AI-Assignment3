@@ -193,16 +193,22 @@ test('preview recovers from connection loss and blocked playback without discard
 })
 
 test('cancelling a preview connection keeps simulation labels and requires an explicit restart', async ({ page }) => {
+  // Hold the simulated handshake pending regardless of browser/CI scheduling.
+  await page.clock.install({ time: new Date('2026-10-24T10:10:00Z') })
+  await page.clock.pauseAt(new Date('2026-10-24T10:10:01Z'))
   const calls = await preview(page)
   await page.getByRole('button', { name: 'Start interview', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Connecting…' })).toBeDisabled()
   await expect(page.getByText('Microphone off · simulated', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Disconnect voice', exact: true }).click()
+  // A cancelled handshake must not activate later when its original deadline passes.
+  await page.clock.runFor(700)
   await expect(page.getByText('Simulated · Disconnected', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Start interview', exact: true })).toBeEnabled()
   await expect(page.getByText('UI preview · simulated interview')).toBeVisible()
   await expect(page.getByText('Start your interview to hear the first question.')).toBeVisible()
   await page.getByRole('button', { name: 'Start interview', exact: true }).click()
+  await page.clock.runFor(700)
   await expect(page.getByText('Simulated · Connected', { exact: true })).toBeVisible()
   await expect(page.getByText('Microphone off · simulated', { exact: true })).toBeVisible()
   expect(calls.errors).toEqual([])

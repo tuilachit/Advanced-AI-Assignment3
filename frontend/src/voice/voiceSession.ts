@@ -18,6 +18,7 @@ export class InterviewVoiceSession {
   private options: VoiceSessionOptions
   private turns = new Map<string, TurnRecord>()
   private responseQuestions = new Map<string, string>()
+  private textOnlyResponses = new Set<string>()
   private responseItems = new Map<string, string>()
   private completedResponses = new Set<string>()
   private calls = new Set<string>()
@@ -119,11 +120,18 @@ export class InterviewVoiceSession {
       && !this.turns.has(text(object(event.item).id))) return
     if (this.finishing && (type.startsWith('input_audio_buffer.')
       || type.startsWith('conversation.item.input_audio_transcription.')) && !this.turns.has(itemId)) return
+    if ((type.startsWith('response.output_audio') || type === 'output_audio_buffer.started')
+      && !this.responseQuestions.has(responseId)) {
+      if (!this.cancelledResponses.has(responseId)) this.rejectUnissuedAudio(responseId)
+      return
+    }
     if (type === 'response.created') {
       const response = object(event.response)
       const id = text(response.id)
       if (!id || this.createdResponses.has(id)) return
       this.createdResponses.add(id)
+      if (Array.isArray(response.output_modalities) && response.output_modalities.length === 1
+        && response.output_modalities[0] === 'text') this.textOnlyResponses.add(id)
       this.activeResponse = id
       const metadata = object(response.metadata)
       const permit = this.speechPermit
@@ -143,9 +151,12 @@ export class InterviewVoiceSession {
         if (this.cancelledResponses.has(responseId) && !this.turns.has(text(item.id))) return
         const question = this.responseQuestions.get(responseId)
         if (!question) {
-          this.send({ type: 'response.cancel', response_id: responseId })
-          this.send({ type: 'output_audio_buffer.clear' })
-          this.error('unissued_question', 'The voice model spoke without an issued question. Reconnect to retry.')
+          // Automatic tool decisions are configured as text-only. An assistant
+          // message in that response is not spoken question audio or transcript evidence.
+          const hasAudio = Array.isArray(item.content)
+            && item.content.some(content => ['audio', 'output_audio'].includes(text(object(content).type)))
+          if (this.textOnlyResponses.has(responseId) && !hasAudio) return
+          this.rejectUnissuedAudio(responseId)
           return
         }
         this.responseItems.set(responseId, text(item.id))
@@ -247,6 +258,12 @@ export class InterviewVoiceSession {
       this.error('voice_provider_error', 'The voice provider reported an error. Reconnect or finish the interview.')
     }
     this.settle()
+  }
+
+  private rejectUnissuedAudio(responseId: string): void {
+    this.send({ type: 'response.cancel', response_id: responseId })
+    this.send({ type: 'output_audio_buffer.clear' })
+    this.error('unissued_question', 'The voice model spoke without an issued question. Reconnect to retry.')
   }
 
   private updateInputGate(): void {
