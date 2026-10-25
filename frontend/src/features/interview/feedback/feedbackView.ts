@@ -1,0 +1,68 @@
+import type { Interview } from '../../../types'
+
+// Presentation models only. feedbackService maps Sunny's generated API types
+// here without computing scores, applicability or speaking measurements.
+export type CriterionKey = 'relevance' | 'specificity' | 'structure' | 'technicalReasoning' | 'star'
+export interface EvidenceReference { turnId: string; excerpt: string }
+export interface CriterionReview {
+  key: CriterionKey
+  rating: { kind: 'assessed'; score: 0 | 1 | 2 | 3 | 4 } |
+    { kind: 'notApplicable' | 'insufficientEvidence' }
+  explanation: string
+  evidence: EvidenceReference[]
+  suggestion?: string
+}
+export interface SpeakingMeasure {
+  key: 'pace' | 'fillers' | 'pauses'
+  measurement: { kind: 'available'; value: number; unit: 'words/min' | 'count' } |
+    { kind: 'unavailable'; reason: string }
+  method: string
+  turnIds: string[]
+}
+export interface QuestionReview {
+  questionId: string
+  criteria: CriterionReview[]
+  measures: SpeakingMeasure[]
+}
+export interface FeedbackView {
+  interviewId: string
+  contextHash: string
+  transcriptRevision: number
+  rubricVersion: string
+  createdAt: string
+  questions: QuestionReview[]
+  limitations: string[]
+}
+
+export interface SampleFeedbackSource {
+  kind: 'sample'
+  load(interview: Interview, signal: AbortSignal): Promise<FeedbackView>
+}
+export type FeedbackReadState = { status: 'not_requested' | 'generating' } |
+  { status: 'ready'; report: FeedbackView } | { status: 'failed'; retryable: boolean; message: string }
+export interface ServiceFeedbackSource {
+  kind: 'service'
+  read(interview: Interview, signal: AbortSignal): Promise<FeedbackReadState>
+  generate(interview: Interview, requestId: string, signal: AbortSignal): Promise<void>
+}
+export type FeedbackSource = SampleFeedbackSource | ServiceFeedbackSource
+
+export const criterionLabels: Record<CriterionKey, string> = {
+  relevance: 'Relevance', specificity: 'Specificity', structure: 'Structure',
+  technicalReasoning: 'Technical reasoning', star: 'STAR',
+}
+export const scoreAnchors = [
+  'Does not address the criterion', 'Limited', 'Partially meets the criterion',
+  'Clear and well supported', 'Specific, well reasoned and strongly supported',
+] as const
+
+export function reportMatchesInterview(report: FeedbackView, interview: Interview) {
+  return report.interviewId === interview.interview_id && report.contextHash === interview.context_hash &&
+    report.transcriptRevision === interview.transcript_revision
+}
+
+export function evidenceTurn(interview: Interview, questionId: string, reference: EvidenceReference) {
+  return interview.turns.find((turn) => turn.turn_id === reference.turnId && turn.question_id === questionId &&
+    turn.speaker === 'candidate' && turn.transcript_status === 'final' &&
+    reference.excerpt.trim() && turn.text.includes(reference.excerpt))
+}

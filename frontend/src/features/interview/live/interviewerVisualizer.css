@@ -1,0 +1,190 @@
+/* State illustration, never a waveform or a measurement of audio amplitude.
+   Motion uses only transforms/opacity; gradient surfaces and blur stay static. */
+.interviewer-visualizer {
+  --orb-size: 156px;
+  --orb-ring: #a9c2ce;
+  --orb-ripple-end: 1.4;
+  --orb-ripple-duration: 4.8s;
+  --orb-ripple-strength: .65;
+  position: relative;
+  isolation: isolate;
+  width: 230px;
+  height: 230px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.interviewer-halo {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #afcbd54a 25%, #dce8eb33 52%, transparent 71%);
+  opacity: .65;
+  transition: opacity 600ms ease;
+}
+.interviewer-orbit {
+  position: absolute;
+  width: calc(var(--orb-size) + 26px);
+  height: calc(var(--orb-size) + 26px);
+  border: 1px solid var(--orb-ring);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 600ms ease, border-color 600ms ease;
+}
+.interviewer-orbit::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border: 1px solid var(--orb-ring);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+/* Two small, staggered surfaces travel outward inside the fixed visualizer
+   frame. Only active speech states animate them; no persistent layer hints. */
+.interviewer-ripples {
+  position: absolute;
+  width: calc(var(--orb-size) + 2px);
+  height: calc(var(--orb-size) + 2px);
+}
+.interviewer-ripples::before, .interviewer-ripples::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--orb-ring);
+  border-radius: 50%;
+  opacity: 0;
+}
+.interviewer-visualizer:is([data-state=speaking], [data-state=user-speaking]) .interviewer-ripples::before,
+.interviewer-visualizer:is([data-state=speaking], [data-state=user-speaking]) .interviewer-ripples::after {
+  animation: interviewer-ripple-out var(--orb-ripple-duration) cubic-bezier(.2, .45, .45, 1) infinite;
+}
+.interviewer-visualizer:is([data-state=speaking], [data-state=user-speaking]) .interviewer-ripples::after {
+  animation-delay: calc(var(--orb-ripple-duration) / -2);
+}
+.interviewer-orb {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 20%, #ffffff 0%, #edf5f7 24%, #c6dbe5 62%, #8caab9 100%);
+  box-shadow: inset 0 0 0 1px #819caa26, inset 3px 4px 14px #ffffffb3,
+    inset -9px -12px 22px #466c7d24, 0 12px 30px #546e7b1f;
+  transition: opacity 600ms ease, filter 600ms ease;
+}
+.interviewer-orb-current {
+  position: absolute;
+  inset: -18%;
+  border-radius: 43% 57% 62% 38% / 53% 39% 61% 47%;
+  filter: blur(6px);
+  transition: opacity 650ms ease;
+}
+.interviewer-orb-current--blue {
+  background: radial-gradient(ellipse at 30% 63%, #527c9ebd 10%, transparent 43%),
+    radial-gradient(ellipse at 65% 35%, #edf6f7f2 14%, transparent 44%),
+    radial-gradient(ellipse at 72% 78%, #82a8bbd1 8%, transparent 43%);
+  opacity: .55;
+  transform: rotate(-22deg);
+}
+.interviewer-orb-current--sage {
+  background: radial-gradient(ellipse at 63% 72%, #6a9b8cd9 0%, transparent 52%),
+    radial-gradient(ellipse at 29% 35%, #f3f5e7e6 8%, transparent 47%),
+    radial-gradient(ellipse at 25% 77%, #a5c5bcbd 0%, transparent 45%);
+  opacity: .27;
+  transform: rotate(16deg);
+}
+.interviewer-orb-light {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 33% 17%, #ffffffd9 0%, #ffffff26 36%, transparent 60%);
+  box-shadow: inset 0 1px 6px #ffffff80, inset 0 -2px 9px #35596b1a;
+}
+.interviewer-orb-symbol { position: absolute; inset: 0; display: grid; place-items: center; color: #56707b; }
+.interviewer-orb-symbol svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* A deliberate, slow connection cue; it does not indicate microphone activity. */
+.interviewer-visualizer:is([data-state=connecting], [data-state=finalizing]) .interviewer-orbit {
+  opacity: .7;
+  border-color: #dce5e9;
+  border-top-color: #809daa;
+  border-right-color: #a8bfca;
+  animation: interviewer-orbit-turn 6s linear infinite;
+}
+.interviewer-visualizer:is([data-state=connecting], [data-state=finalizing]) .interviewer-halo {
+  animation: interviewer-halo-rest 4s ease-in-out infinite;
+}
+.interviewer-visualizer[data-state=listening] .interviewer-orbit { opacity: .35; }
+.interviewer-visualizer[data-state=listening] .interviewer-orb { animation: interviewer-rest 6s ease-in-out infinite; }
+.interviewer-visualizer[data-state=listening] .interviewer-orb-current--sage { opacity: .45; }
+
+/* Interviewer speech: an uneven, multi-axis breath. Independent layer/ring
+   periods keep the movement organic without random or fabricated audio levels. */
+.interviewer-visualizer[data-state=speaking] { --orb-ring: #7d9dae; }
+.interviewer-visualizer[data-state=speaking] .interviewer-orb { animation: interviewer-speak 8.2s ease-in-out infinite; }
+.interviewer-visualizer[data-state=speaking] .interviewer-orbit { opacity: .22; }
+.interviewer-visualizer[data-state=speaking] .interviewer-halo { opacity: 1; animation: interviewer-halo-speak 6.4s ease-in-out infinite; }
+.interviewer-visualizer[data-state=speaking] .interviewer-orb-current--blue { opacity: 1; animation: interviewer-current-blue 8.6s ease-in-out infinite; }
+.interviewer-visualizer[data-state=speaking] .interviewer-orb-current--sage { opacity: .38; animation: interviewer-current-sage 12.4s ease-in-out infinite alternate; }
+
+/* Candidate speech detected: a steadier core, stronger sage rings and a quicker
+   outward cadence, distinct from the interviewer's broad breathing movement. */
+.interviewer-visualizer[data-state=user-speaking] {
+  --orb-ring: #658d7b;
+  --orb-ripple-duration: 3.2s;
+  --orb-ripple-strength: .8;
+}
+.interviewer-visualizer[data-state=user-speaking] .interviewer-orbit { opacity: .6; }
+.interviewer-visualizer[data-state=user-speaking] .interviewer-orbit::after { opacity: .5; }
+.interviewer-visualizer[data-state=user-speaking] .interviewer-orb-current--blue { opacity: .22; }
+.interviewer-visualizer[data-state=user-speaking] .interviewer-orb-current--sage { opacity: 1; animation: interviewer-current-sage 8s ease-in-out infinite alternate; }
+
+/* Quiet states settle completely; readable text outside the orb remains the
+   authoritative status, including when motion is reduced or colour is unseen. */
+.interviewer-visualizer:is([data-state=muted], [data-state=disconnected]) .interviewer-orb { filter: saturate(.2); opacity: .72; }
+.interviewer-visualizer:is([data-state=muted], [data-state=disconnected]) .interviewer-halo { opacity: .2; }
+.interviewer-visualizer[data-state=disconnected] .interviewer-orbit { opacity: .4; border-style: dashed; }
+.interviewer-visualizer[data-state=error] { --orb-ring: #b58d79; }
+.interviewer-visualizer[data-state=error] .interviewer-orbit { opacity: .65; }
+.interviewer-visualizer[data-state=error] .interviewer-orb { filter: saturate(.25); }
+.interviewer-visualizer[data-state=error] .interviewer-orb-symbol { color: #8d5e47; }
+.interviewer-visualizer[data-state=finished] .interviewer-orb-current--sage { opacity: .65; }
+.interviewer-visualizer[data-state=finished] .interviewer-orb-symbol { color: #496b5d; }
+
+@keyframes interviewer-orbit-turn { to { transform: rotate(360deg); } }
+@keyframes interviewer-rest { 50% { transform: scale(1.012); } }
+@keyframes interviewer-speak {
+  0%, 100% { transform: translate(0, 1px) rotate(-2deg) scale(.985, 1.015); }
+  22% { transform: translate(-1px, -2px) rotate(2deg) scale(1.075, 1.045); }
+  45% { transform: translate(1px, -1px) rotate(4deg) scale(1.025, 1.065); }
+  68% { transform: translate(0, 2px) rotate(-1deg) scale(.97, .99); }
+  84% { transform: translate(-1px, 0) rotate(-3deg) scale(1.035, 1.015); }
+}
+@keyframes interviewer-halo-rest { 50% { opacity: .45; transform: scale(.96); } }
+@keyframes interviewer-halo-speak { 0%, 100% { opacity: .55; transform: scale(.93); } 44% { opacity: 1; transform: scale(1.035); } }
+@keyframes interviewer-current-blue {
+  0%, 100% { transform: translate(-7%, 4%) rotate(-22deg); }
+  35% { transform: translate(6%, -8%) rotate(24deg) scale(1.04); }
+  72% { transform: translate(9%, 3%) rotate(46deg); }
+}
+@keyframes interviewer-current-sage { from { transform: translate(7%, -5%) rotate(16deg); } to { transform: translate(-8%, 6%) rotate(-32deg); } }
+@keyframes interviewer-ripple-out {
+  0% { transform: scale(.96); opacity: 0; }
+  16% { opacity: var(--orb-ripple-strength); }
+  64% { opacity: calc(var(--orb-ripple-strength) * .55); }
+  100% { transform: scale(var(--orb-ripple-end)); opacity: 0; }
+}
+
+@media (max-width: 620px) {
+  .interviewer-visualizer { --orb-size: 134px; --orb-ripple-end: 1.33; width: 190px; height: 190px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .interviewer-visualizer, .interviewer-visualizer::before, .interviewer-visualizer::after,
+  .interviewer-visualizer *, .interviewer-visualizer *::before, .interviewer-visualizer *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

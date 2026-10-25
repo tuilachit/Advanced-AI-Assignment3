@@ -1,6 +1,6 @@
 import type { SessionState } from '../types'
 
-export type Stage = 'profile' | 'resume' | 'jobs' | 'cv' | 'evidence'
+export type Stage = 'profile' | 'resume' | 'jobs' | 'cv' | 'interview' | 'evidence'
 
 interface StageNavProps {
   active: Stage
@@ -38,6 +38,7 @@ export function StageNav({ active, state, onChange }: StageNavProps) {
     { id: 'resume', label: 'Resume entries', enabled: stateAtLeast(state, 'profile_confirmed') },
     { id: 'jobs', label: 'Job matches', enabled: stateAtLeast(state, 'resume_entries_approved') },
     { id: 'cv', label: 'CV studio', enabled: stateAtLeast(state, 'job_selected') },
+    { id: 'interview', label: 'Interview', enabled: true },
     { id: 'evidence', label: 'Evidence', enabled: true },
   ]
 

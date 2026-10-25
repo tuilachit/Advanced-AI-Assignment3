@@ -261,7 +261,7 @@ textarea:hover, input:hover { border-color: #879994; }
   .hero-art { display: none; }
   .workspace { margin-top: 29px; }
   .stage-nav { gap: 8px; }
-  .stage-button { min-height: 44px; gap: 6px; font-size: 10px; padding-bottom: 14px; }
+  .stage-button { min-height: 44px; gap: 6px; font-size: 12px; padding-bottom: 14px; }
   .stage-index { font-size: 9px; }
   .main-content { padding: 28px 0 45px; }
   .section-heading { gap: 12px; align-items: flex-start; flex-direction: column; }

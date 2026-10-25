@@ -1,0 +1,70 @@
+.live-role { max-width: none; overflow-wrap: anywhere; }
+.live-role span { text-transform: capitalize; }
+.live-workspace { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 28px; align-items: start; }
+.live-conversation { min-width: 0; padding: 28px; background: #fff; border: 1px solid var(--line); border-radius: 5px; }
+.live-session-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.live-session-bar .status-pill { font-size: 13px; }
+.live-timer { display: grid; gap: 3px; text-align: right; }
+.live-timer > span:first-child { font-size: 12px; color: var(--muted); }
+.live-timer > [role=timer] { font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.live-timer[data-urgent=true] { color: #943f30; }
+.live-visualizer-slot { text-align: center; padding: 12px 0 24px; }
+.live-activity h3 { margin: 0 0 8px; font-size: 22px; font-weight: 500; letter-spacing: -.5px; }
+.live-activity p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.live-question { padding: 22px 0; border-block: 1px solid var(--line); margin-bottom: 22px; }
+.live-progress-label { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.live-progress-label h3 { margin: 0; font-size: 14px; font-weight: 500; }
+.live-progress-label > span { font-size: 12px; color: var(--muted); }
+.live-question progress { display: block; width: 100%; height: 4px; appearance: none; border: none; margin: 14px 0 20px; color: #657f91; background: #e7edee; }
+.live-question progress::-webkit-progress-bar { background: #e7edee; }
+.live-question progress::-webkit-progress-value { background: #657f91; }
+.live-question progress::-moz-progress-bar { background: #657f91; }
+.live-question > p { margin: 0; font-size: 21px; font-weight: 400; letter-spacing: -.3px; line-height: 1.5; overflow-wrap: anywhere; }
+.live-controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+.live-controls button, .live-finish-confirm button { min-height: 46px; font-size: 13px; }
+.live-end-button { border: 1px solid #dac2bb; border-radius: 4px; padding: 12px 17px; color: #833d2e; background: #fff7f4; }
+.live-end-button:disabled { opacity: .5; }
+.live-mic-button[aria-pressed=true]:not(:disabled) { background: #eaf0f3; border-color: #91a4b0; }
+.live-microphone-state { text-align: center; font-size: 13px; color: var(--muted); margin: 14px 0 0; }
+.live-session-note { margin: 20px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.live-error { margin: 0 0 20px; font-size: 14px; }
+.live-error p { margin-top: 0; line-height: 1.7; }
+.live-complete, .live-finish-confirm { border: 1px solid #d4dfdc; border-radius: 4px; padding: 18px; background: #f1f6f4; margin-bottom: 20px; font-size: 14px; line-height: 1.7; }
+.live-complete p { margin-bottom: 0; }
+.live-finish-confirm { margin-top: 20px; background: #fff8f4; border-color: #e5d3c9; }
+.live-finish-confirm h3 { font-size: 17px; margin: 0; }
+.live-finish-confirm > div { display: flex; flex-wrap: wrap; gap: 12px; }
+.live-transcript { min-width: 0; border: 1px solid var(--line); background: #f4f7f8; border-radius: 5px; }
+.live-transcript-heading { padding: 24px; border-bottom: 1px solid var(--line); }
+.live-transcript h3 { font-size: 19px; font-weight: 500; margin: 0 0 8px; }
+.live-transcript-heading p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.live-transcript-scroll { height: 570px; overflow-y: auto; overscroll-behavior: contain; padding: 24px; }
+.live-transcript-scroll:focus-visible { outline: 2px solid #496d89; outline-offset: 3px; }
+.live-transcript ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 24px; }
+.live-transcript li { overflow-wrap: anywhere; }
+.transcript-turn-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px; font-size: 14px; }
+.transcript-turn-meta > span { font-size: 12px; color: var(--muted); }
+.live-transcript li p { white-space: pre-wrap; font-size: 15px; line-height: 1.75; margin: 10px 0 0; }
+.live-transcript li[data-status=partial] p { color: #516473; }
+.live-transcript li[data-status=failed] { padding-left: 14px; border-left: 2px solid #ad7260; }
+.transcript-empty { padding: 30px 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.transcript-empty p { color: var(--ink); }
+.live-preview-label { display: grid; gap: 7px; margin-bottom: 28px; background: #f7f0e5; border: 1px solid #ddccae; border-radius: 4px; padding: 18px; font-size: 14px; line-height: 1.6; }
+.live-preview-label span { color: #665641; }
+.live-preview-tools { margin-top: 26px; font-size: 14px; line-height: 1.7; }
+.live-preview-tools summary { cursor: pointer; padding-block: 10px; }
+.live-preview-tools .live-controls { justify-content: flex-start; }
+.interview-ready-actions { display: flex; flex-wrap: wrap; gap: 14px; }
+@media (max-width: 1000px) { .live-workspace { grid-template-columns: minmax(0, 1fr); } .live-transcript-scroll { height: 360px; } }
+@media (max-width: 620px) {
+  .live-interview .section-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .live-conversation { padding: 18px; }
+  .live-activity h3 { font-size: 21px; }
+  .live-question > p { font-size: 20px; }
+  .live-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live-controls .primary-button { grid-column: 1 / -1; }
+  .live-transcript-heading, .live-transcript-scroll { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .interviewer-visualizer *, .live-interview { animation: none !important; transition: none !important; }
+}
