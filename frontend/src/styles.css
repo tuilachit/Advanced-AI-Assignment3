@@ -91,8 +91,19 @@ a { color: inherit; }
 .writing-prompts span::before { content: '+'; margin-right: 6px; }
 .assistant-message, .user-message { max-width: 90%; padding: 13px 16px; border-radius: 3px; background: #f5f6f4; color: #414b4b; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
 .user-message { margin-left: auto; background: #eaf0f3; }
-.assistant-message span, .user-message span { display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-.assistant-message p, .user-message p { margin: 0; white-space: pre-wrap; }
+.assistant-message > span, .user-message > span { display: block; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.user-message p { margin: 0; white-space: pre-wrap; }
+.guide-message-content { min-width: 0; }
+.guide-message-content p { margin: 0 0 12px; white-space: normal; }
+.guide-message-content ul, .guide-message-content ol { margin: 10px 0 14px; padding-left: 22px; }
+.guide-message-content li { padding-left: 3px; margin: 5px 0; }
+.guide-message-content li > p { margin: 0; }
+.guide-message-content li > ul, .guide-message-content li > ol { margin: 6px 0 8px; }
+.guide-message-content strong { font-weight: 600; color: var(--ink); }
+.guide-message-content a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.guide-message-content code { font-size: .92em; white-space: pre-wrap; }
+.guide-message-content blockquote { margin: 12px 0; padding-left: 12px; border-left: 2px solid var(--line); }
+.guide-message-content > :last-child { margin-bottom: 0; }
 .message-form { display: grid; gap: 10px; margin-top: 24px; }
 label { color: #515b5c; font-size: 11px; font-weight: 500; }
 textarea, input { width: 100%; min-width: 0; border: 1px solid #ccd3d1; border-radius: 3px; padding: 14px; background: #fff; color: var(--ink); font-size: 13px; line-height: 1.7; resize: vertical; transition: border-color 160ms; }

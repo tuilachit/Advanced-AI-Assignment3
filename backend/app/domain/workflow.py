@@ -24,6 +24,7 @@ from app.domain.models import (
     SessionState,
     TraceEvent,
 )
+from app.domain.profile_fields import profile_field_category
 
 
 class SessionNotFoundError(LookupError):
@@ -382,7 +383,11 @@ class SessionWorkflow:
         return session
 
     def missing_required_fields(self, session: Session) -> list[str]:
-        fields = {fact.field for fact in session.profile.facts if fact.value.strip()}
+        fields = {
+            profile_field_category(fact.field)
+            for fact in session.profile.facts
+            if fact.value.strip()
+        }
         missing = [field for field in ("name", "education", "skills") if field not in fields]
         if not {"experience", "project"}.intersection(fields):
             missing.append("experience_or_project")

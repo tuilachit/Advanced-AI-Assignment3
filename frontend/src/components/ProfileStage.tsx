@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import Markdown from 'react-markdown'
 
 import type { ChatMessage, Session } from '../types'
 
@@ -60,7 +61,13 @@ export function ProfileStage({
               messages.map((entry, index) => (
                 <div className={`${entry.role}-message`} key={`${entry.role}-${index}`}>
                   <span>{entry.role === 'assistant' ? 'CV guide' : 'You'}</span>
-                  <p>{entry.text}</p>
+                  {entry.role === 'assistant' ? (
+                    <div className="guide-message-content">
+                      <Markdown skipHtml allowedElements={[
+                        'p', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'code', 'a', 'blockquote',
+                      ]} unwrapDisallowed>{entry.text}</Markdown>
+                    </div>
+                  ) : <p>{entry.text}</p>}
                 </div>
               ))
             )}

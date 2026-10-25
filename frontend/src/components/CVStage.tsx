@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 
 import type { CVClaim, CVDocument, Fact, Session } from '../types'
+import { CONTACT_FIELD_ALIASES } from '../contactFields'
 
 const PDFExportPanel = lazy(() => import('./PDFExportPanel'))
 
@@ -58,7 +59,7 @@ export function CVStage({
   const targetJobTitle = session.retrieval_results.find(
     (job) => job.document_id === session.selected_job_id,
   )?.title
-  const contactFields = new Set(['name', 'email', 'phone', 'github', 'linkedin'])
+  const contactFields = new Set(Object.values(CONTACT_FIELD_ALIASES).flat())
   const contactClaims = draft.claims
     .map((claim, index) => ({ claim, index }))
     .filter(({ claim }) => isContactClaim(claim, factsById, contactFields))

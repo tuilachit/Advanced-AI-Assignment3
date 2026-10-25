@@ -1,5 +1,7 @@
+import httpx
 import pytest
 from fastapi.testclient import TestClient
+from openai import APIConnectionError, APIStatusError, APITimeoutError
 
 from app.domain.models import (
     CVClaim,
@@ -16,8 +18,14 @@ from app.domain.models import (
 )
 from app.domain.workflow import SessionWorkflow
 from app.main import ApplicationServices, create_app
-from app.providers.base import AgentModelProvider, ProviderTurn, ToolCall
-from app.providers.fake import ScriptedProvider
+from app.providers.base import (
+    AgentModelProvider,
+    ProviderProtocolError,
+    ProviderTurn,
+    ProviderUnavailableError,
+    ToolCall,
+)
+from app.providers.fake import ScriptedCVProvider, ScriptedProvider
 from app.providers.unavailable import MissingOpenAIProvider
 from app.services.cv import CVService
 from app.services.resume_entries import ResumeEntryService
@@ -93,6 +101,127 @@ def required_facts() -> list[dict[str, str]]:
         {"field": "skills", "value": "Python, SQL, REST APIs"},
         {"field": "project", "value": "Built a course-planning API with Python"},
         {"field": "target_role", "value": "Software Engineering Intern"},
+    ]
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected_code", "message_fragment"),
+    [
+        ("protocol", "provider_invalid_response", "retry"),
+        ("network", "provider_connection_error", "connection"),
+        ("timeout", "provider_timeout", "timed out"),
+        ("auth", "provider_authentication_error", "key"),
+        ("quota", "provider_quota_exhausted", "billing"),
+        ("rate", "provider_rate_limited", "shortly"),
+        ("access", "provider_access_denied", "access"),
+        ("outage", "provider_unavailable", "temporarily"),
+    ],
+)
+def test_provider_failure_reports_safe_actionable_cause(
+    failure, expected_code, message_fragment, caplog
+) -> None:
+    private = "private-profile-and-key-never-log"
+
+    class FailingProvider:
+        def respond(self, **kwargs):
+            if failure == "protocol":
+                raise ProviderProtocolError(private)
+            request = httpx.Request("POST", "https://api.openai.com/v1/responses")
+            if failure == "network":
+                cause = APIConnectionError(message=private, request=request)
+            elif failure == "timeout":
+                cause = APITimeoutError(request=request)
+            else:
+                status_code = {
+                    "auth": 401,
+                    "quota": 429,
+                    "rate": 429,
+                    "access": 403,
+                    "outage": 503,
+                }[failure]
+                cause = APIStatusError(
+                    private,
+                    response=httpx.Response(status_code, request=request),
+                    body={
+                        "code": "insufficient_quota" if failure == "quota" else private,
+                    },
+                )
+            raise ProviderUnavailableError(private) from cause
+
+    services = make_services(FailingProvider())
+    client = TestClient(create_app(services))
+    base = confirmed_session(client)
+    before = client.get(base).json()
+    with caplog.at_level("WARNING", logger="app.main"):
+        response = client.post(f"{base}/messages", json={"message": "Help me continue"})
+    assert response.status_code in {502, 503}
+    assert response.json()["error"]["code"] == expected_code
+    assert message_fragment in response.json()["error"]["message"].lower()
+    assert client.get(base).json() == before
+    assert "Provider failure" in caplog.text
+    assert private not in caplog.text
+    assert private not in response.text
+
+
+def test_rich_extraction_can_confirm_review_entries_and_match_without_losing_facts() -> None:
+    facts = [fact for fact in required_facts() if fact["field"] != "project"] + [
+        {"field": "experience_startup", "value": "Built Python APIs"},
+        {"field": "experience_internship", "value": "Built Python data pipelines"},
+        {"field": "projects", "value": "Built a Python retrieval assistant"},
+        {"field": "research_finance", "value": "Evaluated financial retrieval"},
+    ]
+    services = make_services(
+        ScriptedProvider(
+            [
+                ProviderTurn(
+                    tool_calls=[
+                        ToolCall(
+                            call_id="extract-rich",
+                            name="update_profile",
+                            arguments={"facts": facts},
+                        )
+                    ]
+                ),
+                ProviderTurn(message="Review the extracted facts, then confirm."),
+            ]
+        )
+    )
+    client = TestClient(create_app(services))
+    session_id = client.post("/api/sessions").json()["session_id"]
+    base = f"/api/sessions/{session_id}"
+    extracted = client.post(f"{base}/messages", json={"message": "My rich demo profile"})
+    assert extracted.status_code == 200
+    before = extracted.json()["session"]["profile"]["facts"]
+    confirmed = client.post(f"{base}/profile/confirm")
+    assert confirmed.status_code == 200
+    assert [f["fact_id"] for f in confirmed.json()["profile"]["facts"]] == [
+        f["fact_id"] for f in before
+    ]
+    entries = [
+        ResumeEntry(
+            kind=ResumeEntryKind.PROJECT,
+            heading=ResumeText(text=f["value"], fact_ids=[f["fact_id"]]),
+            source_fact_ids=[f["fact_id"]],
+        )
+        for f in before
+        if f["field"] == "projects"
+    ]
+    services.resume_entries = ResumeEntryService(
+        services.workflow,
+        ScriptedCVProvider(
+            generated=CVDocument(target_job_id="unused", headline="Unused"),
+            proposed_entries=entries,
+        ),
+    )
+    approve_entries(client, base)
+    matched = client.post(f"{base}/jobs/retrieve")
+    assert matched.status_code == 200
+    results = matched.json()["retrieval_results"]
+    assert len({r["document_id"] for r in results}) == 3
+    assert any(r["score_breakdown"]["experience_score"] > 0 for r in results)
+    assert any(r["score_breakdown"]["project_score"] > 0 for r in results)
+    assert [f["fact_id"] for f in matched.json()["profile"]["facts"]] == [
+        f["fact_id"] for f in before
     ]
 
 

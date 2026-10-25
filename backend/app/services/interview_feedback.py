@@ -34,6 +34,7 @@ from app.domain.feedback_models import (
 )
 from app.domain.interview_models import Interview, InterviewContextSnapshot, TranscriptTurn
 from app.domain.models import FactStatus
+from app.domain.profile_fields import profile_field_category
 from app.providers.base import ProviderProtocolError, ProviderUnavailableError
 from app.providers.interview_feedback import (
     FeedbackAssessmentInput,
@@ -45,9 +46,8 @@ from app.providers.interview_feedback import (
 from app.services.feedback_metrics import calculate_speaking_metrics, count_words
 from app.services.interview_flow import InterviewConflictError, InterviewError, InterviewFlowService
 
-# Fact.field is unrestricted. These exact labels come from workflow required fields,
-# retrieval's technical_skills alias and profile_to_confirmed_facts fixtures. Unknown
-# labels (including contact/account/link fields) are excluded by default. Do not send
+# Fact.field is unrestricted. Resolve only known relevant categories with the shared
+# profile policy. Unknown labels (including contact/account/link fields) fail closed. Do not send
 # names, fact IDs, source references, CVs or unrestricted resume-entry display text.
 # This is field minimisation, not a detector for identifiers embedded in allowed prose;
 # submitted answer text remains exact evidence and is never rewritten here.
@@ -55,7 +55,6 @@ _CONTEXT_FIELDS = frozenset(
     {
         "education",
         "skills",
-        "technical_skills",
         "project",
         "experience",
         "target_role",
@@ -73,7 +72,8 @@ def _candidate_context(context: InterviewContextSnapshot) -> tuple[str, ...]:
     return tuple(
         f"{fact.field}: {fact.value}"
         for fact in context.confirmed_facts
-        if fact.field in _CONTEXT_FIELDS and fact.status == FactStatus.CONFIRMED
+        if profile_field_category(fact.field) in _CONTEXT_FIELDS
+        and fact.status == FactStatus.CONFIRMED
     )
 
 

@@ -71,6 +71,16 @@ const cv: CVDocument = {
 }
 
 describe('CVPdfDocument', () => {
+  it('preserves contact aliases and avoids repeating the name as a summary', () => {
+    const aliasedFacts = facts.map((fact) => fact.field === 'email' ? { ...fact, field: 'contact_email' } : fact)
+    const content = buildCvPdfContent(cv, aliasedFacts)
+    expect(content.contactLine).toContain('maya.chen@example.com')
+    expect(content.sections.flatMap((section) => section.claims).map((claim) => claim.claim_id))
+      .not.toContain('claim-name')
+    expect(content.sections.flatMap((section) => section.claims).map((claim) => claim.claim_id))
+      .not.toContain('claim-email')
+  })
+
   it('keeps the name and headline visually separated in the PDF header', () => {
     expect(CV_PDF_LAYOUT.nameBottomMargin).toBeGreaterThanOrEqual(8)
     expect(CV_PDF_LAYOUT.headlineLineHeight).toBeGreaterThanOrEqual(1.15)

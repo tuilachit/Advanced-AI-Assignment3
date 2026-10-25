@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -9,7 +10,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from openai import OpenAI
+from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
 from pydantic import Field, field_validator
 
 from app.api.interview_feedback import build_feedback_router
@@ -36,6 +37,7 @@ from app.domain.workflow import (
 from app.providers.base import (
     AgentModelProvider,
     ProviderError,
+    ProviderProtocolError,
 )
 from app.providers.interview_feedback import (
     OpenAIInterviewFeedbackProvider,
@@ -66,6 +68,54 @@ from app.services.retrieval import (
     RetrievalService,
 )
 from app.settings import Settings
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _provider_failure(error: ProviderError) -> tuple[str, str]:
+    """Classify without exposing provider messages, payloads, or credentials."""
+    cause = error.__cause__
+    upstream_status = cause.status_code if isinstance(cause, APIStatusError) else None
+    code = "provider_unavailable"
+    message = "The AI provider is temporarily unavailable. Please retry shortly."
+    if isinstance(error, ProviderProtocolError):
+        code = "provider_invalid_response"
+        message = (
+            "The AI returned an incomplete or invalid response. "
+            "Review any saved changes and retry the action."
+        )
+    elif isinstance(cause, APITimeoutError):
+        code = "provider_timeout"
+        message = (
+            "The AI request timed out. Review any saved changes, then retry this action."
+        )
+    elif isinstance(cause, APIConnectionError):
+        code = "provider_connection_error"
+        message = "The connection to the AI provider failed. Please retry shortly."
+    elif isinstance(cause, APIStatusError):
+        if cause.code == "insufficient_quota":
+            code = "provider_quota_exhausted"
+            message = "The AI project's quota is exhausted. Check API billing and usage limits."
+        elif upstream_status == 429:
+            code = "provider_rate_limited"
+            message = "The AI provider is rate limiting requests. Please retry shortly."
+        elif upstream_status == 401:
+            code = "provider_authentication_error"
+            message = "The AI provider rejected the backend API key. Check the local configuration."
+        elif upstream_status in {403, 404}:
+            code = "provider_access_denied"
+            message = "The AI project cannot access the configured model. Check model permissions."
+    elif cause is None:
+        # Includes the offline/missing-key provider; never echo its raw error text.
+        message = "The AI provider is unavailable. Check the local configuration and try again."
+    _LOGGER.warning(
+        "Provider failure: category=%s error_type=%s cause_type=%s upstream_status=%s",
+        code,
+        type(error).__name__,
+        type(cause).__name__ if cause else "none",
+        upstream_status,
+    )
+    return code, message
 
 
 class MessageRequest(StrictModel):
@@ -390,11 +440,12 @@ def create_app(
         )
 
     @app.exception_handler(ProviderError)
-    async def provider_error(_request: Request, _error: ProviderError) -> JSONResponse:
+    async def provider_error(_request: Request, error: ProviderError) -> JSONResponse:
+        code, message = _provider_failure(error)
         return _error_response(
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            "provider_unavailable",
-            "The AI provider is unavailable. Check the local configuration and try again.",
+            code,
+            message,
         )
 
     @app.exception_handler(AgentStepLimitError)

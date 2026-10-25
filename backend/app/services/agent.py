@@ -8,6 +8,7 @@ from uuid import uuid4
 from pydantic import Field, ValidationError
 
 from app.domain.models import AgentObservation, FactInput, StrictModel, TraceEvent
+from app.domain.profile_fields import PROFILE_FIELD_GUIDANCE
 from app.domain.workflow import SessionWorkflow
 from app.providers.base import AgentModelProvider, ProviderProtocolError, ToolCall
 
@@ -34,7 +35,7 @@ AGENT_TOOLS: list[dict[str, Any]] = [
                     "items": {
                         "type": "object",
                         "properties": {
-                            "field": {"type": "string"},
+                            "field": {"type": "string", "description": PROFILE_FIELD_GUIDANCE},
                             "value": {"type": "string"},
                         },
                         "required": ["field", "value"],
@@ -102,9 +103,10 @@ class AgentService:
                     {
                         "message": message,
                         "session": session.model_dump(mode="json", exclude={"trace"}),
+                        "missing_fields": self._workflow.missing_required_fields(session),
                     }
                 ),
-            }
+            },
         ]
         # Retain only user-visible turns, never provider reasoning or tool internals.
         # Keep the user's turn even if a later provider step fails after a tool commits.
@@ -175,6 +177,7 @@ class AgentService:
                 result: dict[str, object] = {
                     "updated_fields": [fact.field for fact in facts],
                     "state": session.state.value,
+                    "missing_fields": self._workflow.missing_required_fields(session),
                 }
             elif call.name == "retrieve_jobs":
                 result = self._retrieve_jobs(session_id)

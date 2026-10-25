@@ -44,7 +44,9 @@ class CapturingResponses:
                 "arguments": "{}",
             },
         )
-        return SimpleNamespace(output=[function_call], output_text="")
+        return SimpleNamespace(
+            status="completed", incomplete_details=None, output=[function_call], output_text=""
+        )
 
 
 class CapturingEmbeddings:
@@ -62,10 +64,16 @@ class CapturingStructuredResponses:
     def __init__(self, parsed: Any) -> None:
         self.parsed = parsed
         self.kwargs: dict[str, Any] = {}
+        self.with_raw_response = self
 
     def parse(self, **kwargs: Any) -> Any:
         self.kwargs = kwargs
-        return SimpleNamespace(output_parsed=self.parsed)
+        return SimpleNamespace(
+            http_response=SimpleNamespace(close=lambda: None, json=lambda: {
+                "status": "completed", "incomplete_details": None,
+            }),
+            parse=lambda: SimpleNamespace(output_parsed=self.parsed),
+        )
 
 
 def test_openai_agent_provider_enforces_privacy_and_strict_serial_tools() -> None:
@@ -369,13 +377,15 @@ def test_openai_entry_validation_audits_only_cited_confirmed_facts() -> None:
 def test_entry_provider_failure_is_a_safe_typed_error(method, failure) -> None:
     from app.providers.base import ProviderProtocolError, ProviderUnavailableError
 
-    class Responses:
+    class Responses(CapturingStructuredResponses):
         def parse(self, **kwargs):
             if failure == "unavailable":
                 raise RuntimeError("sensitive provider detail")
-            return SimpleNamespace(output_parsed=None)
+            return super().parse(**kwargs)
 
-    provider = OpenAIModelProvider(client=SimpleNamespace(responses=Responses()), model="offline")
+    provider = OpenAIModelProvider(
+        client=SimpleNamespace(responses=Responses(None)), model="offline"
+    )
     args = ([],) if method == "propose_resume_entries" else ([], [])
     expected = ProviderProtocolError if failure == "malformed" else ProviderUnavailableError
     with pytest.raises(expected) as caught:

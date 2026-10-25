@@ -895,6 +895,35 @@ def test_candidate_context_uses_confirmed_relevant_field_allowlist(
     assert sent == result.assessment_input.context.candidate_context
 
 
+def test_feedback_context_retains_named_work_but_excludes_private_and_goal_labels(
+    preparation_fixture, monkeypatch
+):
+    prepared = finish_preparation(preparation_fixture)
+    service, flow, _, _, interview, _, _, session_id = preparation_fixture
+    context = prepared.context.model_copy(deep=True)
+    prototype = context.confirmed_facts[0]
+    relevant = {
+        "experience_startup": "Built an estimation platform",
+        "experience_internship": "Developed data pipelines",
+        "projects": "Evaluated retrieval systems",
+        "research_finance": "Compared financial retrieval approaches",
+    }
+    excluded = {
+        "experience_contact_email": "private@example.test",
+        "project_goal": "Future aspirational project",
+        "unknown_field": "Unclassified information",
+    }
+    context.confirmed_facts.extend(
+        prototype.model_copy(update={"field": field, "value": value})
+        for field, value in (relevant | excluded).items()
+    )
+    monkeypatch.setattr(flow, "get_context", lambda *args: context.model_copy(deep=True))
+    result = service.prepare(session_id, interview["interview_id"], prepared.request)
+    text = "\n".join(result.assessment_input.context.candidate_context)
+    assert all(value in text for value in relevant.values())
+    assert all(value not in text for value in excluded.values())
+
+
 def test_assess_valid_output_is_detached_and_preserves_inputs(preparation_fixture):
     prepared = finish_preparation(preparation_fixture)
     proposal = full_assessment(prepared)

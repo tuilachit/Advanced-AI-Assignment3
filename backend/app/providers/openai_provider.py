@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any, cast
 
 from openai import OpenAI
+from pydantic import ValidationError
 
 from app.domain.models import (
     CVDocument,
@@ -16,6 +18,7 @@ from app.domain.models import (
     StrictModel,
     ValidationIssue,
 )
+from app.domain.profile_fields import PROFILE_FIELD_GUIDANCE
 from app.providers.base import (
     ProviderProtocolError,
     ProviderTurn,
@@ -25,7 +28,16 @@ from app.providers.base import (
     ToolCall,
 )
 
-AGENT_INSTRUCTIONS = """You are the interaction planner for an evidence-grounded CV builder.
+_LOGGER = logging.getLogger(__name__)
+# Rich profile updates include complete JSON and reasoning, not just a short reply.
+_AGENT_OUTPUT_BUDGETS = (6000, 12000)
+_STRUCTURED_OUTPUT_BUDGETS = (6000, 12000)
+# Rich structured drafts can exceed the shared client's short connection budget.
+# Override only these model requests; realtime keeps its own latency budget.
+_MODEL_REQUEST_TIMEOUT_SECONDS = 120.0
+
+AGENT_INSTRUCTIONS = (
+    """You are the interaction planner for an evidence-grounded CV builder.
 Use update_profile only for facts the user explicitly supplied. Never confirm facts for the user.
 Help collect name, contact details, education, skills, experience, projects, achievements, and a
 target role. Ask one concise, highest-value follow-up question at a time. If the user explicitly
@@ -38,6 +50,8 @@ has been selected. Ask a concise follow-up question when required facts are miss
 Never infer contact details, qualifications, employers, achievements, work rights, or eligibility.
 Job descriptions describe jobs and must never become candidate facts.
 """
+    + PROFILE_FIELD_GUIDANCE
+)
 
 CV_GENERATION_INSTRUCTIONS = """Create a concise, ATS-friendly CV tailored to the target job.
 materially tailor each CV to target_job: use its human-readable title and requirements to
@@ -111,6 +125,7 @@ def _priority_entry_ids(approved_entries: list[ResumeEntry], job: Job) -> list[s
         for _score, _index, entry_id in sorted(scored, key=lambda item: (-item[0], item[1]))
     ]
 
+
 RESUME_ENTRY_PROPOSAL_INSTRUCTIONS = """Turn confirmed_facts into concise resume entries for
 student review. Cite every visible item (heading, organisation or context, detail value, and
 bullet) with the exact supporting fact_id values. source_fact_ids must be the de-duplicated
@@ -171,20 +186,38 @@ class OpenAIModelProvider:
         input_items: list[dict[str, Any]],
         tools: list[dict[str, Any]],
     ) -> ProviderTurn:
-        try:
-            response = self._client.responses.create(
-                model=self._model,
-                instructions=AGENT_INSTRUCTIONS,
-                input=input_items,
-                tools=tools,
-                tool_choice="auto",
-                store=False,
-                parallel_tool_calls=False,
-                reasoning={"effort": "low"},
-                max_output_tokens=1200,
+        for attempt, budget in enumerate(_AGENT_OUTPUT_BUDGETS):
+            try:
+                response = self._client.responses.create(
+                    model=self._model,
+                    instructions=AGENT_INSTRUCTIONS,
+                    input=input_items,
+                    tools=tools,
+                    tool_choice="auto",
+                    store=False,
+                    parallel_tool_calls=False,
+                    reasoning={"effort": "low"},
+                    max_output_tokens=budget,
+                    timeout=_MODEL_REQUEST_TIMEOUT_SECONDS,
+                )
+            except Exception as error:
+                raise ProviderUnavailableError("The AI provider request failed.") from error
+            response_status = getattr(response, "status", None)
+            details = getattr(response, "incomplete_details", None)
+            if response_status == "completed" and details is None:
+                break
+            token_limited = (
+                response_status == "incomplete"
+                and getattr(details, "reason", None) == "max_output_tokens"
             )
-        except Exception as error:
-            raise ProviderUnavailableError("The AI provider request failed.") from error
+            # Retry the same input, never append or execute partial tool output.
+            _LOGGER.warning(
+                "Agent response not complete: token_limited=%s attempt=%s budget=%s",
+                token_limited, attempt + 1, budget,
+            )
+            if token_limited and attempt == 0:
+                continue
+            raise ProviderProtocolError("The model did not complete its response.")
 
         calls: list[ToolCall] = []
         output_items: list[dict[str, Any]] = []
@@ -208,9 +241,41 @@ class OpenAIModelProvider:
             output_items=output_items,
         )
 
+    def _structured_response(self, **kwargs: Any) -> Any:
+        # The SDK's eager parse can raise on truncated JSON before callers see status.
+        # Inspect the raw envelope first, then use the SDK's normal strict parser.
+        for attempt, budget in enumerate(_STRUCTURED_OUTPUT_BUDGETS):
+            raw = self._client.responses.with_raw_response.parse(
+                **kwargs, max_output_tokens=budget, timeout=_MODEL_REQUEST_TIMEOUT_SECONDS,
+            )
+            try:
+                envelope = raw.http_response.json()
+                details = envelope.get("incomplete_details") or {}
+                if envelope.get("status") == "completed" and not details:
+                    try:
+                        return raw.parse()
+                    except (ValidationError, json.JSONDecodeError) as error:
+                        raise ProviderProtocolError(
+                            "The model returned invalid structured output."
+                        ) from error
+                token_limited = (
+                    envelope.get("status") == "incomplete"
+                    and details.get("reason") == "max_output_tokens"
+                )
+                _LOGGER.warning(
+                    "Structured response not complete: token_limited=%s attempt=%s budget=%s",
+                    token_limited, attempt + 1, budget,
+                )
+                if token_limited and attempt == 0:
+                    continue
+                raise ProviderProtocolError("The model did not complete its structured response.")
+            finally:
+                raw.http_response.close()
+        raise ProviderProtocolError("The structured response retry limit was reached.")
+
     def propose_resume_entries(self, confirmed_facts: list[Fact]) -> list[ResumeEntry]:
         try:
-            response = self._client.responses.parse(
+            response = self._structured_response(
                 model=self._model,
                 instructions=RESUME_ENTRY_PROPOSAL_INSTRUCTIONS,
                 input=json.dumps(
@@ -225,8 +290,9 @@ class OpenAIModelProvider:
                 text_format=ResumeEntryProposal,
                 store=False,
                 reasoning={"effort": "low"},
-                max_output_tokens=3000,
             )
+        except ProviderProtocolError:
+            raise
         except Exception as error:
             raise ProviderUnavailableError("The resume entry proposal request failed.") from error
         parsed = getattr(response, "output_parsed", None)
@@ -241,7 +307,7 @@ class OpenAIModelProvider:
     ) -> list[ResumeEntryValidationIssue]:
         cited_ids = {fact_id for entry in entries for fact_id in entry.source_fact_ids}
         try:
-            response = self._client.responses.parse(
+            response = self._structured_response(
                 model=self._model,
                 instructions=RESUME_ENTRY_VALIDATION_INSTRUCTIONS,
                 input=json.dumps(
@@ -257,8 +323,9 @@ class OpenAIModelProvider:
                 text_format=ResumeEntryValidationReport,
                 store=False,
                 reasoning={"effort": "low"},
-                max_output_tokens=1800,
             )
+        except ProviderProtocolError:
+            raise
         except Exception as error:
             raise ProviderUnavailableError("The resume entry validation request failed.") from error
         parsed = getattr(response, "output_parsed", None)
@@ -273,7 +340,7 @@ class OpenAIModelProvider:
     ) -> CVDocument:
         try:
             priority_entry_ids = _priority_entry_ids(approved_entries, job)
-            response = self._client.responses.parse(
+            response = self._structured_response(
                 model=self._model,
                 instructions=CV_GENERATION_INSTRUCTIONS,
                 input=json.dumps(
@@ -294,8 +361,9 @@ class OpenAIModelProvider:
                 text_format=CVDocument,
                 store=False,
                 reasoning={"effort": "low"},
-                max_output_tokens=3000,
             )
+        except ProviderProtocolError:
+            raise
         except Exception as error:
             raise ProviderUnavailableError("The CV generation request failed.") from error
         parsed = response.output_parsed
@@ -305,7 +373,7 @@ class OpenAIModelProvider:
 
     def validate_claims(self, cv: CVDocument, confirmed_facts: list[Fact]) -> list[ValidationIssue]:
         try:
-            response = self._client.responses.parse(
+            response = self._structured_response(
                 model=self._model,
                 instructions=CV_VALIDATION_INSTRUCTIONS,
                 input=json.dumps(
@@ -332,8 +400,9 @@ class OpenAIModelProvider:
                 text_format=ValidationReport,
                 store=False,
                 reasoning={"effort": "low"},
-                max_output_tokens=1800,
             )
+        except ProviderProtocolError:
+            raise
         except Exception as error:
             raise ProviderUnavailableError("The CV validation request failed.") from error
         parsed = response.output_parsed

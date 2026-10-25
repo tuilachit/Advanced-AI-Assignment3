@@ -2,6 +2,8 @@ import { Document, Font, Page, StyleSheet, Text, View } from '@react-pdf/rendere
 
 import type { CVClaim, CVDocument, Fact } from '../types'
 
+import { CONTACT_FIELD_ALIASES, isContactField } from '../contactFields'
+
 Font.registerHyphenationCallback((word) => [word])
 
 const CONTACT_FIELDS = ['email', 'phone', 'github', 'linkedin', 'portfolio', 'website']
@@ -107,7 +109,7 @@ export function buildCvPdfContent(
   const name = confirmedFacts.find((fact) => fact.field === 'name')?.value ?? 'Candidate'
   const readableTargetJobTitle = targetJobTitle?.trim() || null
   const contactLine = CONTACT_FIELDS
-    .map((field) => confirmedFacts.find((fact) => fact.field === field)?.value)
+    .map((field) => confirmedFacts.find((fact) => CONTACT_FIELD_ALIASES[field].includes(fact.field))?.value)
     .filter((value): value is string => Boolean(value))
     .join(' · ') || null
   const contactClaims = new Set(
@@ -183,7 +185,7 @@ export function CVPdfDocument({ cv, facts, targetJobTitle }: CVPdfDocumentProps)
 
 function isContactClaim(claim: CVClaim, factsById: Map<string, Fact>) {
   const facts = claim.fact_ids.map((factId) => factsById.get(factId))
-  return facts.length > 0 && facts.every((fact) => fact && CONTACT_FIELDS.includes(fact.field))
+  return facts.length > 0 && facts.every((fact) => fact && isContactField(fact.field))
 }
 
 function CVSection({ heading, claims }: { heading: string; claims: CVClaim[] }) {
@@ -191,7 +193,7 @@ function CVSection({ heading, claims }: { heading: string; claims: CVClaim[] }) 
     <View style={styles.section}>
       <Text style={styles.heading}>{heading}</Text>
       {claims.map((claim) => (
-        <View style={styles.claimRow} key={claim.claim_id}>
+        <View style={styles.claimRow} key={claim.claim_id} wrap={false}>
           <Text style={styles.bullet}>-</Text>
           <Text style={styles.claim}>{claim.text}</Text>
         </View>

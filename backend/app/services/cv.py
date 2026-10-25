@@ -14,6 +14,7 @@ from app.domain.models import (
     TraceEvent,
     ValidationIssue,
 )
+from app.domain.profile_fields import is_contact_field
 from app.domain.workflow import InvalidTransitionError, SessionWorkflow
 from app.providers.base import CVProvider
 
@@ -69,7 +70,7 @@ class CVService:
             fact
             for fact in snapshot.profile.facts
             if fact.status is FactStatus.CONFIRMED
-            and fact.field in {"name", "email", "phone", "github", "linkedin"}
+            and is_contact_field(fact.field)
         ]
         cv = self._provider.generate_cv(
             [fact.model_copy(deep=True) for fact in contact_facts],

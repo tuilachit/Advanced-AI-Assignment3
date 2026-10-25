@@ -76,10 +76,10 @@ export function LiveInterviewStage({ interview: initial, visible = true, integra
               ? 'The session ended before it could finish. Your available transcript is below.' : hint}</p></div>
         </div>
         <section className="live-question" aria-labelledby="current-question-title">
-          <div className="live-progress-label"><h3 id="current-question-title">{question ? `Question ${mainNumber || '—'} of ${mains.length}` : 'Your first question'}
+          <div className="live-progress-label"><h3 id="current-question-title">{question ? `Question ${mainNumber || '—'} of ${mains.length}` : terminal ? 'Interview finished' : 'Your first question'}
             {question?.kind === 'follow_up' ? ' · Follow-up' : ''}</h3><span>{completed} of {mains.length} main questions completed or skipped</span></div>
           <progress value={completed} max={mains.length || 1} aria-label="Main question progress" />
-          <p role="status">{question?.text ?? (terminal ? 'No question was issued in this interview.' : 'Start your interview to hear the first question.')}</p>
+          <p role="status">{question?.text ?? (terminal ? 'Review the questions and answers in your transcript below.' : 'Start your interview to hear the first question.')}</p>
         </section>
 
         {!live.controller && !live.checking ? <p className="interview-notice">Live voice is not available for this interview. {interview.started_at
