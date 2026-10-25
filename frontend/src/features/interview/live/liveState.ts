@@ -5,7 +5,7 @@ export type VoiceProblem = Extract<VoiceNotification, { type: 'error' }>
 export interface LiveState {
   interview: Interview
   connection: Extract<VoiceNotification, { type: 'connection' }>['status']
-  activity: { muted: boolean; candidate_speaking: boolean; interviewer_playing: boolean }
+  activity: Omit<Extract<VoiceNotification, { type: 'activity' }>, 'type'>
   error: VoiceProblem | null
 }
 

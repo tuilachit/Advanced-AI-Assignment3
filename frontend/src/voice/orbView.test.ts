@@ -23,6 +23,21 @@ it('does not display listening before a connection is established', () => {
   expect(label.textContent).toBe('Listening')
 })
 
+it('does not claim to listen while question input is automatically paused', () => {
+  const { view, orb, label, hint } = setup()
+  view.handle({ type: 'connection', status: 'connected' })
+  view.handle({ type: 'activity', candidate_speaking: false, interviewer_playing: false,
+    muted: false, input_paused: true })
+  expect(label.textContent).toBe('Preparing your question')
+  expect(hint.textContent).toContain('microphone')
+  view.handle({ type: 'activity', candidate_speaking: false, interviewer_playing: true,
+    muted: false, input_paused: true })
+  expect(orb.dataset.state).toBe('speaking')
+  view.handle({ type: 'activity', candidate_speaking: false, interviewer_playing: false,
+    muted: false, input_paused: false })
+  expect(label.textContent).toBe('Listening')
+})
+
 it('reflects actual interviewer and candidate activity, with mute taking priority', () => {
   const { view, orb, label } = setup()
   view.handle({ type: 'connection', status: 'connected' })

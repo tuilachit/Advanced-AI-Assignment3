@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { InterviewVoiceSession } from './voiceSession'
 import type { InterviewApi, TranscriptTurn, VoiceEvent } from './types'
 import { firstQuestion as first, interviewFixture as fixture } from './testFixtures'
+
+const sessions = new Set<InterviewVoiceSession>()
+afterEach(() => { sessions.forEach(session => session.close()); sessions.clear(); vi.useRealTimers() })
 
 function setup(failWrites = false) {
   const saved = new Map<string, TranscriptTurn>()
@@ -37,6 +40,7 @@ function setup(failWrites = false) {
   const session = new InterviewVoiceSession({ interview: fixture(), connection_id: 'c1', api,
     send: (event) => sent.push(event), emit: (event) => events.push(event),
     can_hear_audio: () => true, retry_delay_ms: 0 })
+  sessions.add(session)
   return { session, saved, sent, events, steps, skips, api }
 }
 
@@ -55,7 +59,211 @@ function advance(session: InterviewVoiceSession, args = '{"follow_up_question":"
     output: [{ type: 'function_call', name: 'advance_interview', call_id: callId, arguments: args }] } })
 }
 
+function questionResponse(session: InterviewVoiceSession, sent: Record<string, unknown>[], id = 'r1') {
+  const request = sent.filter(event => event.type === 'response.create').at(-1)!.response as {
+    metadata: Record<string, string>
+  }
+  session.handle({ type: 'response.created', response: { id, metadata: request.metadata } })
+}
+
 describe('native voice transcript and progression', () => {
+  it.each([false, true])('suspends an already-running ASR deadline when question speech is queued=%s', async queued => {
+    vi.useFakeTimers()
+    const { session, sent, events } = setup()
+    speech(session)
+    advance(session)
+    if (queued) session.handle({ type: 'response.created', response: { id: 'automatic' } })
+    session.askCurrentQuestion()
+    if (!queued) questionResponse(session, sent)
+    await vi.advanceTimersByTimeAsync(11_000)
+    expect(events.filter(event => event.type === 'error')).toEqual([])
+  })
+
+  it.each(['repeat_question', 'continue_listening'])('discards a superseded advance decision after %s without dropping transcript evidence', async name => {
+    const { session, sent, steps, saved } = setup()
+    speech(session)
+    advance(session)
+    session.handle({ type: 'response.done', response: { id: 'new-decision', status: 'completed', output: [
+      { type: 'function_call', name, call_id: 'new-call', arguments: '{}' },
+    ] } })
+    final(session)
+    if (name === 'repeat_question') {
+      questionResponse(session, sent, 'replay')
+      session.handle({ type: 'response.done', response: { id: 'replay', status: 'completed', output: [] } })
+      session.handle({ type: 'output_audio_buffer.stopped', response_id: 'replay' })
+    }
+    await session.flush()
+    expect(steps).toHaveLength(0)
+    expect([...saved.values()]).toEqual([expect.objectContaining({ text: 'I wrote tests for the Python API.' })])
+    expect(sent).toContainEqual(expect.objectContaining({ item: expect.objectContaining({
+      type: 'function_call_output', call_id: 'call-one', output: JSON.stringify({ error: 'advance_superseded', action: name }),
+    }) }))
+    advance(session, undefined, 'fresh-decision')
+    await session.flush()
+    expect(steps).toHaveLength(1)
+  })
+
+  it('does not time out a saved answer merely because the question is still playing', async () => {
+    vi.useFakeTimers()
+    const { session, sent, steps, events } = setup()
+    session.askCurrentQuestion()
+    questionResponse(session, sent)
+    session.handle({ type: 'response.done', response: { id: 'r1', status: 'completed', output: [] } })
+    speech(session)
+    final(session)
+    advance(session)
+    await vi.advanceTimersByTimeAsync(11000)
+    expect(events.filter(event => event.type === 'error')).toEqual([])
+    session.handle({ type: 'output_audio_buffer.stopped', response_id: 'r1' })
+    await session.flush()
+    expect(steps).toHaveLength(1)
+  })
+
+  it('preserves late candidate evidence without interrupting the issued question or advancing before playback ends', async () => {
+    const { session, sent, saved, steps } = setup()
+    try {
+      session.askCurrentQuestion()
+      questionResponse(session, sent)
+      session.handle({ type: 'response.output_item.added', response_id: 'r1',
+        item: { id: 'question', type: 'message', role: 'assistant' } })
+      session.handle({ type: 'output_audio_buffer.started', response_id: 'r1' })
+      session.handle({ type: 'response.done', response: { id: 'r1', status: 'completed', output: [] } })
+      speech(session)
+      final(session)
+      advance(session)
+      await session.flush()
+      expect(steps).toHaveLength(0)
+      expect([...saved.values()].find(turn => turn.speaker === 'candidate')?.text).toBe('I wrote tests for the Python API.')
+      session.handle({ type: 'output_audio_buffer.stopped', response_id: 'r1' })
+      await session.flush()
+      expect(steps).toHaveLength(1)
+      expect([...saved.values()].find(turn => turn.speaker === 'interviewer')?.delivery_status).toBe('complete')
+    } finally { session.close() }
+  })
+
+  it('serializes a repeated question behind actual playback rather than generation completion', () => {
+    const { session, sent } = setup()
+    try {
+      session.askCurrentQuestion()
+      questionResponse(session, sent)
+      session.handle({ type: 'response.done', response: { id: 'r1', status: 'completed', output: [] } })
+      session.askCurrentQuestion()
+      expect(sent.filter(event => event.type === 'response.create')).toHaveLength(1)
+      session.handle({ type: 'output_audio_buffer.stopped', response_id: 'r1' })
+      expect(sent.filter(event => event.type === 'response.create')).toHaveLength(2)
+    } finally { session.close() }
+  })
+
+  it('does not let an automatic tool response consume permission for an issued question', async () => {
+    const { session, sent, saved, events } = setup()
+    try {
+      session.askCurrentQuestion()
+      const request = sent[0].response as { metadata: Record<string, string> }
+      session.handle({ type: 'response.created', response: { id: 'automatic' } })
+      session.handle({ type: 'response.done', response: { id: 'automatic', status: 'completed', output: [
+        { type: 'function_call', name: 'continue_listening', call_id: 'wait', arguments: '{}' },
+      ] } })
+      session.handle({ type: 'response.created', response: { id: 'issued', metadata: request.metadata } })
+      session.handle({ type: 'response.output_item.added', response_id: 'issued',
+        item: { id: 'issued-item', type: 'message', role: 'assistant', content: [] } })
+      session.handle({ type: 'response.output_audio_transcript.done', response_id: 'issued',
+        item_id: 'issued-item', transcript: first.text })
+      await session.flush()
+      expect([...saved.values()]).toEqual([expect.objectContaining({
+        speaker: 'interviewer', question_id: 'q1', text: first.text,
+      })])
+      expect(events.filter(event => event.type === 'error')).toEqual([])
+    } finally { session.close() }
+  })
+
+  it.each(['missing', 'wrong-question', 'wrong-request', 'wrong-connection']) (
+    'rejects %s speech metadata instead of accepting the next assistant item', async (variant) => {
+      const { session, sent, saved, events } = setup()
+      try {
+        session.askCurrentQuestion()
+        const request = sent[0].response as { metadata: Record<string, string> }
+        const metadata = variant === 'missing' ? undefined : { ...request.metadata,
+          ...(variant === 'wrong-question' ? { question_id: 'foreign-question' } : {}),
+          ...(variant === 'wrong-request' ? { speech_request_id: 'stale-request' } : {}),
+          ...(variant === 'wrong-connection' ? { connection_id: 'old-connection' } : {}),
+        }
+        session.handle({ type: 'response.created', response: { id: 'untrusted', metadata } })
+        session.handle({ type: 'response.output_item.added', response_id: 'untrusted',
+          item: { id: 'untrusted-item', type: 'message', role: 'assistant', content: [] } })
+        await session.flush()
+        expect(saved.size).toBe(0)
+        expect(sent).toContainEqual({ type: 'response.cancel', response_id: 'untrusted' })
+        expect(sent).toContainEqual({ type: 'output_audio_buffer.clear' })
+        expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'unissued_question' }))
+      } finally { session.close() }
+    },
+  )
+
+  it('gives repeated questions unique permission and rejects replay of the previous request', async () => {
+    const { session, sent, saved, events } = setup()
+    try {
+      session.askCurrentQuestion()
+      const original = (sent[0].response as { metadata: Record<string, string> }).metadata
+      session.handle({ type: 'response.created', response: { id: 'first', metadata: original } })
+      session.handle({ type: 'response.done', response: { id: 'first', status: 'completed', output: [] } })
+      session.handle({ type: 'output_audio_buffer.stopped', response_id: 'first' })
+      session.askCurrentQuestion()
+      const requests = sent.filter(event => event.type === 'response.create')
+      const repeated = (requests[1].response as { metadata: Record<string, string> }).metadata
+      expect(original.speech_request_id).toEqual(expect.any(String))
+      expect(repeated.speech_request_id).not.toBe(original.speech_request_id)
+      expect(repeated.connection_id).toBe('c1')
+      session.handle({ type: 'response.created', response: { id: 'replay', metadata: original } })
+      session.handle({ type: 'response.output_item.added', response_id: 'replay',
+        item: { id: 'replayed-item', type: 'message', role: 'assistant' } })
+      await session.flush()
+      expect(saved.size).toBe(0)
+      expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'unissued_question' }))
+    } finally { session.close() }
+  })
+
+  it('ignores duplicate response-created events without consuming the next repeat permission', async () => {
+    const { session, sent, saved, events } = setup()
+    try {
+      session.askCurrentQuestion()
+      const original = (sent[0].response as { metadata: unknown }).metadata
+      questionResponse(session, sent, 'first')
+      session.handle({ type: 'response.done', response: { id: 'first', status: 'completed', output: [] } })
+      session.handle({ type: 'output_audio_buffer.stopped', response_id: 'first' })
+      session.askCurrentQuestion()
+      session.handle({ type: 'response.created', response: { id: 'first', metadata: original } })
+      questionResponse(session, sent, 'repeat')
+      session.handle({ type: 'response.output_item.added', response_id: 'repeat',
+        item: { id: 'repeat-item', type: 'message', role: 'assistant' } })
+      await session.flush()
+      expect([...saved.values()]).toEqual([expect.objectContaining({ question_id: 'q1', speaker: 'interviewer' })])
+      expect(events.filter(event => event.type === 'error')).toEqual([])
+    } finally { session.close() }
+  })
+
+  it('keeps Skip cancellation bound to the old speech request when an automatic response arrives first', async () => {
+    const { session, api, sent, saved, events } = setup()
+    try {
+      api.skip = async () => ({ action: 'ask_question', question: { ...first, question_id: 'q2' }, flow_revision: 2 })
+      session.askCurrentQuestion()
+      const original = (sent[0].response as { metadata: unknown }).metadata
+      await session.skip()
+      session.handle({ type: 'response.created', response: { id: 'automatic' } })
+      session.handle({ type: 'response.done', response: { id: 'automatic', status: 'completed', output: [] } })
+      session.handle({ type: 'response.created', response: { id: 'old', metadata: original } })
+      session.handle({ type: 'response.output_item.added', response_id: 'old',
+        item: { id: 'old-item', type: 'message', role: 'assistant' } })
+      session.handle({ type: 'response.done', response: { id: 'old', status: 'cancelled', output: [] } })
+      expect(sent).toContainEqual({ type: 'response.cancel', response_id: 'old' })
+      questionResponse(session, sent, 'next')
+      session.handle({ type: 'response.output_item.added', response_id: 'next',
+        item: { id: 'next-item', type: 'message', role: 'assistant' } })
+      await session.flush()
+      expect([...saved.values()]).toEqual([expect.objectContaining({ question_id: 'q2', speaker: 'interviewer' })])
+      expect(events.filter(event => event.type === 'error')).toEqual([])
+    } finally { session.close() }
+  })
+
   it('speaks each newly issued question after playback recovers, without a candidate prompt', async () => {
     const { session, sent, api } = setup()
     let audible = true
@@ -63,8 +271,9 @@ describe('native voice transcript and progression', () => {
       send: event => sent.push(event), emit: () => {}, can_hear_audio: () => audible })
     try {
       gated.askCurrentQuestion()
-      gated.handle({ type: 'response.created', response: { id: 'r1' } })
+      questionResponse(gated, sent)
       gated.handle({ type: 'response.done', response: { id: 'r1', status: 'completed', output: [] } })
+      gated.handle({ type: 'output_audio_buffer.stopped', response_id: 'r1' })
       audible = false
       speech(gated)
       final(gated)
@@ -95,11 +304,12 @@ describe('native voice transcript and progression', () => {
   })
 
   it('does not register late old-question items when Skip precedes response creation', async () => {
-    const { session, saved, api } = setup()
+    const { session, sent, saved, api } = setup()
     api.skip = async () => ({ action: 'ask_question', question: { ...first, question_id: 'q2' }, flow_revision: 2 })
     session.askCurrentQuestion()
+    const request = sent[0].response as { metadata: Record<string, string> }
     await session.skip()
-    session.handle({ type: 'response.created', response: { id: 'r1', metadata: { question_id: 'q1' } } })
+    session.handle({ type: 'response.created', response: { id: 'r1', metadata: request.metadata } })
     session.handle({ type: 'response.output_item.added', response_id: 'r1', item: { id: 'a1', type: 'message', role: 'assistant' } })
     session.handle({ type: 'response.output_audio_transcript.done', response_id: 'r1', item_id: 'a1', transcript: 'Late old question' })
     await session.flush()
@@ -129,7 +339,7 @@ describe('native voice transcript and progression', () => {
     const { session, sent, api } = setup()
     api.skip = async () => ({ action: 'ask_question', question: { ...first, question_id: 'q2' }, flow_revision: 2 })
     session.askCurrentQuestion()
-    session.handle({ type: 'response.created', response: { id: 'r1' } })
+    questionResponse(session, sent)
     session.handle({ type: 'response.output_item.added', response_id: 'r1', item: { id: 'a1', type: 'message', role: 'assistant' } })
     session.handle({ type: 'output_audio_buffer.started', response_id: 'r1' })
     await session.skip()
@@ -242,14 +452,15 @@ describe('native voice transcript and progression', () => {
     expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'invalid_voice_tool' }))
   })
 
-  it('keeps interrupted output marked interrupted after late completion', async () => {
-    const { session, saved } = setup()
+  it('keeps explicitly cleared output marked interrupted after late completion', async () => {
+    const { session, sent, saved } = setup()
     session.askCurrentQuestion()
-    session.handle({ type: 'response.created', response: { id: 'r1' } })
+    questionResponse(session, sent)
     session.handle({ type: 'response.output_item.added', response_id: 'r1',
       item: { id: 'assistant-item', type: 'message', role: 'assistant' } })
     session.handle({ type: 'output_audio_buffer.started', response_id: 'r1' })
     speech(session)
+    session.handle({ type: 'output_audio_buffer.cleared', response_id: 'r1' })
     session.handle({ type: 'response.output_audio_transcript.done', response_id: 'r1',
       item_id: 'assistant-item', transcript: 'How did you test your API?' })
     session.handle({ type: 'output_audio_buffer.stopped', response_id: 'r1' })

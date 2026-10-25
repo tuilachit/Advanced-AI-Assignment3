@@ -168,12 +168,14 @@ describe('Live Interview with the real voice controller and mocked hardware', ()
     expect(h.posts('start')).toHaveLength(1)
     expect(h.posts('realtime-token')).toHaveLength(1)
     expect(screen.getByText('Connected', { exact: true })).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Listening' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Preparing your question' })).toBeVisible()
+    expect(h.streams[0].track.enabled).toBe(false)
     expect(screen.getByText('Question 1 of 4', { exact: true })).toBeVisible()
     const voice = h.devices[0]
     expect(voice.sent.filter((event) => event.type === 'response.create')).toHaveLength(1)
+    const request = voice.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
     await act(async () => {
-      voice.emit({ type: 'response.created', response: { id: 'response-1' } })
+      voice.emit({ type: 'response.created', response: { id: 'response-1', metadata: request.metadata } })
       voice.emit({ type: 'response.output_item.added', response_id: 'response-1',
         item: { id: 'ai-1', type: 'message', role: 'assistant' } })
       voice.emit({ type: 'output_audio_buffer.started', response_id: 'response-1' })
@@ -182,7 +184,7 @@ describe('Live Interview with the real voice controller and mocked hardware', ()
     await click('Mute microphone')
     expect(h.streams[0].track.enabled).toBe(false)
     await click('Unmute microphone')
-    expect(h.streams[0].track.enabled).toBe(true)
+    expect(h.streams[0].track.enabled).toBe(false)
     expect(screen.getByRole('heading', { name: 'Your interviewer is speaking' })).toBeVisible()
     await act(async () => {
       voice.emit({ type: 'response.output_audio_transcript.done', response_id: 'response-1', item_id: 'ai-1',
@@ -192,6 +194,7 @@ describe('Live Interview with the real voice controller and mocked hardware', ()
       voice.emit({ type: 'input_audio_buffer.speech_started', item_id: 'candidate-1' })
       voice.emit({ type: 'conversation.item.input_audio_transcription.delta', item_id: 'candidate-1', delta: 'I tested' })
     })
+    expect(h.streams[0].track.enabled).toBe(true)
     expect(screen.getByRole('heading', { name: 'You have the floor' })).toBeVisible()
     expect(screen.getByText('Live caption · may change')).toBeVisible()
     await answer(h)
@@ -334,6 +337,14 @@ describe('Live Interview with the real voice controller and mocked hardware', ()
     expect(screen.getByRole('button', { name: 'Reconnect voice' })).toBeEnabled()
     h.server.endUnavailable = false
     await click('Reconnect voice')
+    expect(h.streams[1].track.enabled).toBe(false)
+    const voice = h.devices[1]
+    const request = voice.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    await act(async () => {
+      voice.emit({ type: 'response.created', response: { id: 'reconnected-question', metadata: request.metadata } })
+      voice.emit({ type: 'response.done', response: { id: 'reconnected-question', status: 'completed', output: [] } })
+      voice.emit({ type: 'output_audio_buffer.stopped', response_id: 'reconnected-question' })
+    })
     expect(h.streams[1].track.enabled).toBe(true)
     expect(screen.getByRole('button', { name: 'Skip question' })).toBeEnabled()
   })

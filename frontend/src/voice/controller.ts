@@ -32,6 +32,7 @@ export class RealtimeVoiceController {
   private epoch = 0
   private connecting = false
   private muted = false
+  private inputPaused = true
   private finalizing = false
   private activity = { candidate_speaking: false, interviewer_playing: false }
   private interviewId: string | null = null
@@ -50,7 +51,8 @@ export class RealtimeVoiceController {
   private emit(event: VoiceEvent): void {
     if (event.type === 'activity') {
       this.activity = { candidate_speaking: event.candidate_speaking, interviewer_playing: event.interviewer_playing }
-      event = { ...event, muted: this.muted }
+      event = { ...event, muted: this.muted, input_paused: this.inputPaused,
+        candidate_speaking: event.candidate_speaking && !this.inputPaused }
     }
     for (const listener of this.listeners) listener(event)
   }
@@ -72,6 +74,7 @@ export class RealtimeVoiceController {
     if (this.audio) this.audio.srcObject = null
     this.audio = null
     this.activity = { candidate_speaking: false, interviewer_playing: false }
+    this.inputPaused = true
   }
 
   async connect(id: string): Promise<void> {
@@ -90,6 +93,7 @@ export class RealtimeVoiceController {
       const stream = await this.platform.get_user_media()
       if (epoch !== this.epoch) { stream.getTracks().forEach((track) => track.stop()); check() }
       this.stream = stream
+      this.syncInput()
       let interview = await this.api.get(id)
       check()
       if (interview.phase === 'ready') {
@@ -135,6 +139,12 @@ export class RealtimeVoiceController {
           }
         },
         can_hear_audio: () => Boolean(this.audio && !this.audio.paused && !this.audio.muted),
+        set_input_paused: (paused) => {
+          if (epoch !== this.epoch) return
+          this.inputPaused = paused
+          this.syncInput()
+          this.emit({ type: 'activity', ...this.activity, muted: this.muted })
+        },
       })
       this.engine = engine
       for (const track of stream.getTracks()) peer.addTrack(track, stream)
@@ -225,8 +235,14 @@ export class RealtimeVoiceController {
   set_muted(muted: boolean): void {
     if (this.finalizing) muted = true
     this.muted = muted
-    this.stream?.getAudioTracks().forEach((track) => { track.enabled = !muted })
+    this.syncInput()
     this.emit({ type: 'activity', ...this.activity, muted })
+  }
+
+  private syncInput(): void {
+    this.stream?.getAudioTracks().forEach((track) => {
+      track.enabled = !this.muted && !this.inputPaused && !this.finalizing
+    })
   }
 
   async resume_audio(): Promise<void> {

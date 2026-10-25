@@ -133,7 +133,9 @@ class OpenAIRealtimeProvider:
                     "type": "realtime",
                     "model": self.model,
                     "instructions": instructions,
-                    "output_modalities": ["audio"],
+                    # Automatic answer decisions are silent. The adapter alone
+                    # overrides this to audio for an issued question.
+                    "output_modalities": ["text"],
                     "max_output_tokens": 800,
                     "audio": {
                         "input": {
@@ -147,7 +149,7 @@ class OpenAIRealtimeProvider:
                                 "type": "semantic_vad",
                                 "eagerness": "low",
                                 "create_response": True,
-                                "interrupt_response": True,
+                                "interrupt_response": False,
                             },
                         },
                         "output": {"voice": self.voice, "speed": self.speed},

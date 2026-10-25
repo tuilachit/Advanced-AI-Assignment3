@@ -53,6 +53,124 @@ function voiceApi() {
     turn: async () => ({ event_id: 'e1', turn_id: 't1', transcript_revision: 1 }) }
 }
 
+it('gates microphone input before connecting and until actual question playback stops', async () => {
+  const device = platform()
+  let enabledAtRead: boolean | undefined
+  const api = { ...voiceApi(), get: async () => { enabledAtRead = device.track.enabled; return interviewFixture() } }
+  const controller = new RealtimeVoiceController(api, device.impl)
+  const emit = (event: unknown) => device.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
+  try {
+    await controller.connect('i1')
+    expect(enabledAtRead).toBe(false)
+    expect(device.track.enabled).toBe(false)
+    const request = device.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'question', metadata: request.metadata } })
+    emit({ type: 'response.output_item.added', response_id: 'question', item: { id: 'a1', type: 'message', role: 'assistant' } })
+    emit({ type: 'output_audio_buffer.started', response_id: 'question' })
+    emit({ type: 'response.done', response: { id: 'question', status: 'completed', output: [] } })
+    expect(device.track.enabled).toBe(false)
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'foreign-response' })
+    expect(device.track.enabled).toBe(false)
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'question' })
+    expect(device.track.enabled).toBe(true)
+  } finally { controller.disconnect() }
+})
+
+it('fails closed and releases hardware when question playback completion never arrives', async () => {
+  vi.useFakeTimers()
+  const device = platform()
+  const events: VoiceEvent[] = []
+  const controller = new RealtimeVoiceController(voiceApi(), device.impl)
+  controller.subscribe(event => events.push(event))
+  try {
+    await controller.connect('i1')
+    await vi.advanceTimersByTimeAsync(61000)
+    expect(device.stopped()).toBe(true)
+    expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'voice_response_failed' }))
+    expect(events.at(-1)).toEqual({ type: 'connection', status: 'failed' })
+    expect(device.sent.filter(event => event.type === 'response.create')).toHaveLength(1)
+  } finally { controller.disconnect(); vi.useRealTimers() }
+})
+
+it('requires explicit recovery if the provider cancels protected question playback', async () => {
+  const device = platform()
+  const events: VoiceEvent[] = []
+  const controller = new RealtimeVoiceController(voiceApi(), device.impl)
+  controller.subscribe(event => events.push(event))
+  const emit = (event: unknown) => device.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
+  try {
+    await controller.connect('i1')
+    const request = device.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'question', metadata: request.metadata } })
+    emit({ type: 'response.done', response: { id: 'question', status: 'cancelled', output: [] } })
+    expect(device.stopped()).toBe(true)
+    expect(events).toContainEqual(expect.objectContaining({ type: 'error', code: 'voice_response_failed' }))
+  } finally { controller.disconnect() }
+})
+
+it('gates a reconnected interview independently of late playback events from the old connection', async () => {
+  const device = platform()
+  const controller = new RealtimeVoiceController(voiceApi(), device.impl)
+  const emit = (event: unknown) => device.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
+  try {
+    await controller.connect('i1')
+    const oldRequest = device.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'old', metadata: oldRequest.metadata } })
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'old' })
+    expect(device.track.enabled).toBe(true)
+    controller.disconnect()
+    await controller.connect('i1')
+    expect(device.track.enabled).toBe(false)
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'old' })
+    expect(device.track.enabled).toBe(false)
+    const request = device.sent.filter(event => event.type === 'response.create').at(-1)!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'new', metadata: request.metadata } })
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'new' })
+    expect(device.track.enabled).toBe(true)
+  } finally { controller.disconnect() }
+})
+
+it('preserves manual mute separately from the temporary question input gate', async () => {
+  const device = platform()
+  const controller = new RealtimeVoiceController(voiceApi(), device.impl)
+  const emit = (event: unknown) => device.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
+  try {
+    await controller.connect('i1')
+    const request = device.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'question', metadata: request.metadata } })
+    controller.set_muted(true)
+    controller.set_muted(false)
+    expect(device.track.enabled).toBe(false)
+    controller.set_muted(true)
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'question' })
+    expect(device.track.enabled).toBe(false)
+    controller.set_muted(false)
+    expect(device.track.enabled).toBe(true)
+  } finally { controller.disconnect() }
+})
+
+it('does not let an old playback-stop event enable input for the skipped-to question', async () => {
+  const device = platform()
+  const first = interviewFixture().questions[0]
+  const api = { ...voiceApi(), skip: async () => ({ action: 'ask_question' as const,
+    question: { ...first, question_id: 'q2', text: 'Why SQL?' }, flow_revision: 2 }) }
+  const controller = new RealtimeVoiceController(api, device.impl)
+  const emit = (event: unknown) => device.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
+  try {
+    await controller.connect('i1')
+    const request = device.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'old', metadata: request.metadata } })
+    emit({ type: 'response.output_item.added', response_id: 'old', item: { id: 'a1', type: 'message', role: 'assistant' } })
+    emit({ type: 'output_audio_buffer.started', response_id: 'old' })
+    emit({ type: 'response.done', response: { id: 'old', status: 'completed', output: [] } })
+    await controller.skip()
+    expect(device.sent).toContainEqual({ type: 'output_audio_buffer.clear' })
+    expect(device.sent.filter(event => event.type === 'response.create')).toHaveLength(2)
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'old' })
+    expect(device.track.enabled).toBe(false)
+  } finally { controller.disconnect() }
+})
+
 it('speaks the first issued question automatically once the remote audio is playable', async () => {
   const device = platform()
   device.audio.paused = true
@@ -65,7 +183,8 @@ it('speaks the first issued question automatically once the remote audio is play
     await Promise.resolve()
     expect(device.sent.filter(event => event.type === 'response.create')).toEqual([
       expect.objectContaining({ response: expect.objectContaining({
-        metadata: { question_id: 'q1' }, output_modalities: ['audio'], tool_choice: 'none',
+        metadata: expect.objectContaining({ question_id: 'q1', connection_id: 'c1',
+          speech_request_id: expect.any(String) }), output_modalities: ['audio'], tool_choice: 'none',
       }) }),
     ])
     await controller.resume_audio()
@@ -161,7 +280,8 @@ it('keeps actual interviewer activity across mute and unmute', async () => {
   const emit = (event: unknown) => device.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
   try {
     await controller.connect('i1')
-    emit({ type: 'response.created', response: { id: 'r1' } })
+    const request = device.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'r1', metadata: request.metadata } })
     emit({ type: 'response.output_item.added', response_id: 'r1', item: { id: 'a1', type: 'message', role: 'assistant' } })
     emit({ type: 'output_audio_buffer.started', response_id: 'r1' })
     controller.set_muted(true)
@@ -195,6 +315,10 @@ it('makes reconnect available after a missing-final-transcript timeout', async (
   const emit = (event: unknown) => device.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(event) }))
   try {
     await controller.connect('i1')
+    const request = device.sent.find(event => event.type === 'response.create')!.response as { metadata: unknown }
+    emit({ type: 'response.created', response: { id: 'question', metadata: request.metadata } })
+    emit({ type: 'response.done', response: { id: 'question', status: 'completed', output: [] } })
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'question' })
     emit({ type: 'input_audio_buffer.speech_started', item_id: 'u1' })
     emit({ type: 'input_audio_buffer.speech_stopped', item_id: 'u1' })
     emit({ type: 'response.done', response: { id: 'tool', status: 'completed', output: [

@@ -48,7 +48,7 @@ for (const blocked of [false, true]) test(`speaks automatically with ${blocked ?
         if (event.type !== 'response.create') return
         queueMicrotask(() => {
           for (const data of [
-            { type: 'response.created', response: { id: 'r1' } },
+            { type: 'response.created', response: { id: 'r1', metadata: event.response.metadata } },
             { type: 'response.output_item.added', response_id: 'r1', item: { id: 'a1', type: 'message', role: 'assistant' } },
             { type: 'output_audio_buffer.started', response_id: 'r1' },
           ]) this.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(data) }))
@@ -96,6 +96,8 @@ for (const blocked of [false, true]) test(`speaks automatically with ${blocked ?
   await expect(page.locator('#voice-orb')).toHaveAttribute('data-state', 'speaking')
   await page.evaluate(() => {
     const emit = (window as unknown as { __emitVoice: (event: unknown) => void }).__emitVoice
+    emit({ type: 'response.done', response: { id: 'r1', status: 'completed', output: [] } })
+    emit({ type: 'output_audio_buffer.stopped', response_id: 'r1' })
     emit({ type: 'input_audio_buffer.speech_started', item_id: 'u1', audio_start_ms: 100 })
   })
   await expect(page.locator('#voice-orb')).toHaveAttribute('data-state', 'user-speaking')
